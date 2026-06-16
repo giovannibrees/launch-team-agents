@@ -33,7 +33,7 @@ TYPE: ASSIGN
 DEADLINE: 2024-01-05
 
 Brief attached. Produce:
-1. ICP definition (use the ICP framework in your AGENT.md)
+1. ICP definition (use the ICP framework in your AGENTS.md)
 2. Top 3 positioning angles with rationale
 3. Channel recommendation with budget split
 4. Funnel map (brief description, not a full design)

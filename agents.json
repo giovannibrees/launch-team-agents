@@ -1,0 +1,98 @@
+{
+  "group": "launch-team",
+  "title": "Launch Team — AI Agent System for Product Launches",
+  "version": "1.0.0",
+  "license": "CC-BY-4.0",
+  "author": "Giovanni Brees",
+  "attribution": "\"Launch Team AI Agent System\" by Giovanni Brees, used under CC BY 4.0. Source: https://github.com/giovannibrees/launch-team-agents",
+  "source": "https://github.com/giovannibrees/launch-team-agents",
+  "orchestrator": "launchteam",
+  "shared_knowledge": [
+    "shared/agent-communication-protocol.md",
+    "shared/launch-brief-template.md",
+    "shared/performance-benchmarks.md",
+    "shared/ad-creative-playbook.md",
+    "shared/platform-access-guide.md",
+    "shared/human-approval-policy.md"
+  ],
+  "agents": [
+    {
+      "id": "launchteam",
+      "category": "launch",
+      "name": "LaunchTeam",
+      "role": "Campaign Coordinator",
+      "path": "agents/launchteam/SOUL.md",
+      "operating_manual": "agents/launchteam/AGENTS.md",
+      "workspace": "agents/launchteam",
+      "delegates_to": ["launchmarketing", "launchcreative", "launchads", "launchperformance"],
+      "knowledge": [
+        "shared/agent-communication-protocol.md",
+        "shared/launch-brief-template.md",
+        "shared/human-approval-policy.md"
+      ],
+      "approval": "gate"
+    },
+    {
+      "id": "launchmarketing",
+      "category": "launch",
+      "name": "LaunchMarketing",
+      "role": "Marketing Strategist",
+      "path": "agents/launchmarketing/SOUL.md",
+      "operating_manual": "agents/launchmarketing/AGENTS.md",
+      "workspace": "agents/launchmarketing",
+      "knowledge": [
+        "shared/performance-benchmarks.md",
+        "shared/ad-creative-playbook.md",
+        "shared/platform-access-guide.md",
+        "shared/launch-brief-template.md"
+      ],
+      "approval": "none"
+    },
+    {
+      "id": "launchcreative",
+      "category": "launch",
+      "name": "LaunchCreative",
+      "role": "Creative & Copy",
+      "path": "agents/launchcreative/SOUL.md",
+      "operating_manual": "agents/launchcreative/AGENTS.md",
+      "workspace": "agents/launchcreative",
+      "knowledge": [
+        "shared/ad-creative-playbook.md",
+        "shared/performance-benchmarks.md",
+        "shared/launch-brief-template.md"
+      ],
+      "approval": "required"
+    },
+    {
+      "id": "launchads",
+      "category": "launch",
+      "name": "LaunchAds",
+      "role": "Paid Ads Campaign Manager",
+      "path": "agents/launchads/SOUL.md",
+      "operating_manual": "agents/launchads/AGENTS.md",
+      "workspace": "agents/launchads",
+      "knowledge": [
+        "shared/performance-benchmarks.md",
+        "shared/ad-creative-playbook.md",
+        "shared/platform-access-guide.md",
+        "shared/human-approval-policy.md"
+      ],
+      "approval": "required"
+    },
+    {
+      "id": "launchperformance",
+      "category": "launch",
+      "name": "LaunchPerformance",
+      "role": "Performance Analyst",
+      "path": "agents/launchperformance/SOUL.md",
+      "operating_manual": "agents/launchperformance/AGENTS.md",
+      "workspace": "agents/launchperformance",
+      "knowledge": [
+        "shared/performance-benchmarks.md",
+        "shared/platform-access-guide.md",
+        "shared/human-approval-policy.md"
+      ],
+      "approval": "none"
+    }
+  ]
+}

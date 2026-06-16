@@ -1,0 +1,48 @@
+{
+  "_about": "Example OpenClaw gateway config for the Launch Team agent group. Field names follow OpenClaw's documented agents/subagents configuration. Verify against your installed version: https://docs.openclaw.ai/gateway/config-agents and https://docs.openclaw.ai/tools/subagents",
+
+  "agents": {
+    "defaults": {
+      "model": "anthropic/claude-sonnet-4-6",
+      "thinking": "medium",
+      "subagents": {
+        "_note": "Pick a faster/cheaper model here if you run many specialists in parallel.",
+        "model": "anthropic/claude-sonnet-4-6",
+        "thinking": "low",
+        "maxSpawnDepth": 2,
+        "maxConcurrent": 4,
+        "maxChildrenPerAgent": 4,
+        "runTimeoutSeconds": 1800
+      }
+    },
+
+    "list": [
+      { "name": "launchteam",        "workspace": "./agents/launchteam",        "role": "orchestrator" },
+      { "name": "launchmarketing",   "workspace": "./agents/launchmarketing" },
+      { "name": "launchcreative",    "workspace": "./agents/launchcreative" },
+      { "name": "launchads",         "workspace": "./agents/launchads" },
+      { "name": "launchperformance", "workspace": "./agents/launchperformance" }
+    ]
+  },
+
+  "bindings": [
+    { "_note": "Bind only the orchestrator to a user-facing channel; it delegates to the specialists as sub-agents.",
+      "agent": "launchteam", "channel": "cli", "account": "default" }
+  ],
+
+  "approvals": {
+    "_note": "Enforce human approval in the tooling layer, not just in prompts. See shared/human-approval-policy.md. The keys below are illustrative — wire them to your actual tool gating.",
+    "requireHumanApprovalFor": [
+      "spend",
+      "budget_change",
+      "campaign_create",
+      "campaign_launch",
+      "campaign_edit",
+      "campaign_pause",
+      "publish",
+      "email_send",
+      "credential_use"
+    ],
+    "defaultCampaignStatus": "PAUSED"
+  }
+}
