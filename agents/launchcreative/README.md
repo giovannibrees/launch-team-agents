@@ -18,6 +18,7 @@ copy — drafts for review.
 
 ## Knowledge to load
 - `shared/ad-creative-playbook.md`
+- `shared/ad-policy-compliance.md`
 - `shared/performance-benchmarks.md`
 - `shared/launch-brief-template.md`
 

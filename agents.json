@@ -1,7 +1,7 @@
 {
   "group": "launch-team",
   "title": "Launch Team — AI Agent System for Product Launches",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "license": "CC-BY-4.0",
   "author": "Giovanni Brees",
   "attribution": "\"Launch Team AI Agent System\" by Giovanni Brees, used under CC BY 4.0. Source: https://github.com/giovannibrees/launch-team-agents",
@@ -12,6 +12,8 @@
     "shared/launch-brief-template.md",
     "shared/performance-benchmarks.md",
     "shared/ad-creative-playbook.md",
+    "shared/ad-policy-compliance.md",
+    "shared/measurement-and-attribution.md",
     "shared/platform-access-guide.md",
     "shared/human-approval-policy.md"
   ],
@@ -59,6 +61,7 @@
       "knowledge": [
         "shared/ad-creative-playbook.md",
         "shared/performance-benchmarks.md",
+        "shared/ad-policy-compliance.md",
         "shared/launch-brief-template.md"
       ],
       "approval": "required"
@@ -74,7 +77,9 @@
       "knowledge": [
         "shared/performance-benchmarks.md",
         "shared/ad-creative-playbook.md",
+        "shared/ad-policy-compliance.md",
         "shared/platform-access-guide.md",
+        "shared/measurement-and-attribution.md",
         "shared/human-approval-policy.md"
       ],
       "approval": "required"
@@ -89,6 +94,7 @@
       "workspace": "agents/launchperformance",
       "knowledge": [
         "shared/performance-benchmarks.md",
+        "shared/measurement-and-attribution.md",
         "shared/platform-access-guide.md",
         "shared/human-approval-policy.md"
       ],

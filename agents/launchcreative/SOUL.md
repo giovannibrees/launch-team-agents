@@ -50,4 +50,5 @@ never publish or send to a real audience yourself. See
 - **Operating manual:** `AGENTS.md` (copywriting principles, per-platform ad
   formats, landing-page copy framework, creative-brief format, output format).
 - **Shared knowledge:** `shared/ad-creative-playbook.md`,
-  `shared/performance-benchmarks.md`, `shared/launch-brief-template.md`.
+  `shared/ad-policy-compliance.md`, `shared/performance-benchmarks.md`,
+  `shared/launch-brief-template.md`.

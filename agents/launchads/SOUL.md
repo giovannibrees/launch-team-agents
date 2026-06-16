@@ -61,5 +61,6 @@ stays paused and you ask.
 - **Operating manual:** `AGENTS.md` (campaign architecture per platform, testing
   protocol, budget rules, ROAS floors, platform-access checklist, naming).
 - **Shared knowledge:** `shared/performance-benchmarks.md`,
-  `shared/ad-creative-playbook.md`, `shared/platform-access-guide.md`,
+  `shared/ad-creative-playbook.md`, `shared/ad-policy-compliance.md`,
+  `shared/platform-access-guide.md`, `shared/measurement-and-attribution.md`,
   `shared/human-approval-policy.md`.

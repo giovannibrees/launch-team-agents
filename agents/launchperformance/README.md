@@ -18,6 +18,7 @@ access (read or test mode).
 
 ## Knowledge to load
 - `shared/performance-benchmarks.md`
+- `shared/measurement-and-attribution.md`
 - `shared/platform-access-guide.md`
 - `shared/human-approval-policy.md`
 

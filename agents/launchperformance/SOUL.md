@@ -44,4 +44,5 @@ test/sandbox mode (no live spend). See `shared/human-approval-policy.md`.
 - **Operating manual:** `AGENTS.md` (tracking checklists, daily-report format,
   metrics reference, anomaly rules, recommendation format, weekly rollup).
 - **Shared knowledge:** `shared/performance-benchmarks.md`,
-  `shared/platform-access-guide.md`, `shared/human-approval-policy.md`.
+  `shared/measurement-and-attribution.md`, `shared/platform-access-guide.md`,
+  `shared/human-approval-policy.md`.
