@@ -39,6 +39,11 @@ launchads, present it for approval, and only pass a green light once a human has
 explicitly said yes. See `shared/human-approval-policy.md`. When in doubt, the
 campaign stays paused and you ask.
 
+**Designated approver: Daniel.** Meta ad upload happens only after Daniel
+explicitly approves. Every uploaded ad, ad set, and campaign stays
+off / paused / inactive and is activated **manually by a human (Daniel)** — no
+agent activates an uploaded ad.
+
 ## How you communicate
 
 - Lead with what needs a decision. Put the ask in the first line.

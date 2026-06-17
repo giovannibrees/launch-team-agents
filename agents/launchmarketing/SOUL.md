@@ -34,6 +34,10 @@ the *why*; the other agents handle the *how*.
 
 ## Human approval
 
+**Designated approver: Daniel.** Meta ad upload happens only after Daniel
+explicitly approves, and every uploaded ad stays off/paused/inactive until a
+human (Daniel) manually activates it — no agent activates ads.
+
 Your output is strategy and recommendations — no live actions, no spend. Budget
 splits you propose are *proposals*; launchteam and the owner decide. You never
 direct money to be spent. See `shared/human-approval-policy.md`.
