@@ -74,8 +74,12 @@ launch-team-agents/
 │   ├── launch-brief-template.md
 │   ├── performance-benchmarks.md
 │   ├── ad-creative-playbook.md
+│   ├── ad-policy-compliance.md
+│   ├── measurement-and-attribution.md
 │   ├── platform-access-guide.md
 │   └── human-approval-policy.md
+├── examples/                # Worked end-to-end run (the Brightside launch)
+├── scripts/validate.py      # Structure & reference checks (enforced in CI)
 ├── agents.json              # Machine-readable index of the agent group
 ├── openclaw.config.example.json  # Example gateway config (models, limits, approvals)
 ├── install.sh               # One-command group install for OpenClaw
@@ -87,6 +91,10 @@ Each agent is a self-contained **workspace**: a folder with a `SOUL.md`
 (identity, required by OpenClaw) and an `AGENTS.md` (operating rules). Shared
 domain knowledge lives once in `shared/`; each agent's `README.md` lists the
 files it should load.
+
+See [`examples/`](examples/) for a complete worked run of the whole team on a
+sample product, and run `python3 scripts/validate.py` to verify the agents,
+`agents.json`, and knowledge references all line up (this also runs in CI).
 
 ---
 

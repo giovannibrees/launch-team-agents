@@ -20,7 +20,9 @@ naming convention, optimization moves — all as **specs to be approved**.
 ## Knowledge to load
 - `shared/performance-benchmarks.md`
 - `shared/ad-creative-playbook.md`
+- `shared/ad-policy-compliance.md`
 - `shared/platform-access-guide.md`
+- `shared/measurement-and-attribution.md`
 - `shared/human-approval-policy.md`
 
 ## Human approval

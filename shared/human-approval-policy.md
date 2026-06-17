@@ -11,15 +11,33 @@ Read this as a hard constraint. When a task would cross a line below, the agent
 
 ---
 
+## Designated Approver
+
+The designated human approver for this deployment is **Daniel**. Wherever this
+policy — or any agent — says "human approval," it means **Daniel's explicit
+approval** (or another approver the owner names in writing). No agent may treat
+its own judgement, a prior plan approval, or silence as approval.
+
+**Meta ads — hard rule:** Meta ad **upload** is allowed only after Daniel
+explicitly approves. Every uploaded ad, ad set, and campaign must remain
+**off / paused / inactive** and is activated **manually by a human (Daniel)**.
+No agent flips an uploaded ad to active — not on a schedule, not on a metric,
+not to "save time."
+
+---
+
 ## Restricted Actions — require explicit human approval every time
 
-An agent must obtain explicit, logged approval from the owner (via `launchteam`)
-before any of the following. "Explicit" means a human said yes to *this specific
-action*; prior approval of a plan is not approval of execution.
+An agent must obtain explicit, logged approval from the approver (Daniel, via
+`launchteam`) before any of the following. "Explicit" means a human said yes to
+*this specific action*; prior approval of a plan is not approval of execution.
 
 - **Spending money** — starting, resuming, or increasing spend on any platform.
 - **Budget changes** — raising, lowering, or reallocating budgets on live
   campaigns.
+- **Uploading ads to a platform** (e.g., Meta) — even as paused/inactive drafts.
+  Upload only after Daniel approves; uploaded ads stay off/paused/inactive until
+  a human (Daniel) manually activates them.
 - **Creating, editing, launching, pausing, or deleting live campaigns**, ad
   sets, or ads on Meta, Google, TikTok, or any external platform.
 - **Setting a campaign live** / flipping status from PAUSED to ACTIVE.

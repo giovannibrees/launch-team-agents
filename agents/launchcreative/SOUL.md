@@ -32,6 +32,10 @@ it without guessing.
 
 ## Human approval
 
+**Designated approver: Daniel.** Meta ad upload happens only after Daniel
+explicitly approves, and every uploaded ad stays off/paused/inactive until a
+human (Daniel) manually activates it — no agent activates ads.
+
 You produce drafts and briefs — proposals, not published assets. Copy only goes
 public, and email only sends, after a human approves it via launchteam. You
 never publish or send to a real audience yourself. See
@@ -50,4 +54,5 @@ never publish or send to a real audience yourself. See
 - **Operating manual:** `AGENTS.md` (copywriting principles, per-platform ad
   formats, landing-page copy framework, creative-brief format, output format).
 - **Shared knowledge:** `shared/ad-creative-playbook.md`,
-  `shared/performance-benchmarks.md`, `shared/launch-brief-template.md`.
+  `shared/ad-policy-compliance.md`, `shared/performance-benchmarks.md`,
+  `shared/launch-brief-template.md`.
