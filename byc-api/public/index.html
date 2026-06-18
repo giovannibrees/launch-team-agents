@@ -1,360 +1,766 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BoostYourCampaign</title>
-  <style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f7; color: #111; }
-    header { background: #1a1a2e; color: #fff; padding: 16px 32px; display: flex; align-items: center; gap: 16px; }
-    header h1 { font-size: 1.2rem; font-weight: 600; }
-    nav { background: #fff; border-bottom: 1px solid #e0e0e0; padding: 0 32px; display: flex; gap: 24px; }
-    nav a { display: block; padding: 12px 0; font-size: 0.9rem; color: #555; text-decoration: none; border-bottom: 2px solid transparent; cursor: pointer; }
-    nav a.active { color: #1a1a2e; border-bottom-color: #D83A45; font-weight: 600; }
-    main { max-width: 860px; margin: 40px auto; padding: 0 16px; }
-    .card { background: #fff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 28px; margin-bottom: 24px; }
-    h2 { font-size: 1.1rem; margin-bottom: 8px; }
-    p.hint { font-size: 0.85rem; color: #666; margin-bottom: 20px; }
-    label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; }
-    input, select { width: 100%; padding: 8px 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem; margin-bottom: 14px; }
-    button { background: #1a1a2e; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; font-size: 0.9rem; cursor: pointer; }
-    button.secondary { background: #fff; color: #1a1a2e; border: 1px solid #ccc; }
-    button.danger { background: #c0392b; }
-    button.accent { background: #D83A45; }
-    button:hover { opacity: 0.88; }
-    .key-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f0f0f0; font-size: 0.9rem; }
-    .key-row:last-child { border-bottom: none; }
-    .key-prefix { font-family: monospace; color: #333; }
-    .key-value { font-family: monospace; background: #f0f4ff; border: 1px solid #c3cfe2; border-radius: 4px; padding: 8px 12px; width: 100%; margin: 12px 0; font-size: 0.9rem; word-break: break-all; }
-    .notice { background: #fff8e1; border: 1px solid #f9a825; border-radius: 6px; padding: 12px 16px; font-size: 0.85rem; margin-bottom: 16px; }
-    .success { background: #e8f5e9; border-color: #43a047; }
-    .error-msg { color: #c0392b; font-size: 0.85rem; margin-top: -10px; margin-bottom: 12px; }
-    .tabs { display: flex; gap: 12px; margin-bottom: 24px; }
-    .tab { padding: 8px 18px; border-radius: 20px; border: 1px solid #ccc; background: #fff; cursor: pointer; font-size: 0.85rem; }
-    .tab.active { background: #1a1a2e; color: #fff; border-color: #1a1a2e; }
-    .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 8px; }
-    .stat { background: #fff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 20px; }
-    .stat .label { font-size: 0.78rem; color: #888; text-transform: uppercase; letter-spacing: 0.04em; }
-    .stat .value { font-size: 1.7rem; font-weight: 700; margin-top: 6px; color: #1a1a2e; }
-    .progress { background: #eee; border-radius: 6px; height: 10px; overflow: hidden; margin-top: 8px; }
-    .progress > div { background: #D83A45; height: 100%; }
-    .camp { border: 1px solid #e0e0e0; border-radius: 10px; padding: 20px; margin-bottom: 16px; background: #fff; }
-    .camp h3 { font-size: 1rem; margin-bottom: 4px; }
-    .camp .meta { font-size: 0.82rem; color: #666; margin-bottom: 6px; }
-    .evt { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f0f0f0; font-size: 0.88rem; }
-    .evt:last-child { border-bottom: none; }
-    .badge { display: inline-block; font-size: 0.72rem; padding: 2px 8px; border-radius: 12px; background: #f0f4ff; color: #3b4cca; font-weight: 600; }
-    .muted { color: #999; font-size: 0.85rem; }
-    .row { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
-    .row > div { flex: 1; min-width: 140px; }
-    .toolbar { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
-    #auth-section { display: block; }
-    #app-section { display: none; }
-    .view { display: none; }
-    .view.active { display: block; }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BoostYourCampaign</title>
+<link rel="icon" href="/assets/logo.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *{box-sizing:border-box;-webkit-font-smoothing:antialiased;}
+  body{margin:0;--red:#D33241;font-family:'Plus Jakarta Sans',system-ui,sans-serif;color:#16161D;background:#fff;}
+  ::selection{background:#FBD7DA;color:#16161D;}
+  input::placeholder{color:#A7A7AE;}
+  input:focus{outline:none;border-color:var(--red)!important;box-shadow:0 0 0 3px rgba(211,50,65,.13);}
+  @keyframes bycRowIn{from{opacity:0;transform:translateY(-6px);}to{opacity:1;transform:none;}}
+  a{color:inherit;}
+  button{font-family:inherit;}
+  .nav-link{color:#71717A;text-decoration:none;padding:8px 12px;border-radius:8px;cursor:pointer;}
+  .nav-link:hover{background:#F4F4F1;color:#16161D;}
+  .nav-link.active{color:#16161D;background:#F3EBEC;}
+  .hov-red:hover{color:var(--red)!important;}
+  .hov-dark:hover{color:#16161D!important;}
+  .btn-red{display:inline-flex;align-items:center;justify-content:center;gap:8px;font-weight:700;color:#fff;background:var(--red);border:none;border-radius:12px;cursor:pointer;box-shadow:0 8px 20px -8px rgba(211,50,65,.6);transition:filter .15s,transform .05s;}
+  .btn-red:hover{filter:brightness(.93);}
+  .btn-red:active{transform:translateY(1px);}
+  .icon-btn{display:flex;align-items:center;justify-content:center;border:1px solid #ECECE8;background:#fff;border-radius:9px;color:#71717A;cursor:pointer;width:34px;height:34px;}
+  .icon-btn:hover{background:#F8F8F6;color:#16161D;}
+  .icon-btn.danger:hover{background:#FCEEEF;border-color:#F6D3D6;color:var(--red);}
+  @media (max-width:920px){[data-grid="hero"]{grid-template-columns:1fr !important;gap:40px !important;}[data-grid="dash"]{grid-template-columns:1fr !important;}.stat-grid{grid-template-columns:1fr !important;}}
+  @media (max-width:860px){[data-docs="wrap"]{flex-direction:column !important;gap:24px !important;}[data-docs="aside"]{position:static !important;width:100% !important;}}
+  .byc-doc{max-width:768px;}
+  .byc-doc h2{font-size:21px;font-weight:800;letter-spacing:-0.02em;margin:46px 0 4px;padding-top:26px;border-top:1px solid #EEEEEA;scroll-margin-top:88px;}
+  .byc-doc h2:first-of-type{border-top:none;padding-top:0;margin-top:6px;}
+  .byc-doc h3{font-size:16px;font-weight:700;letter-spacing:-0.01em;margin:30px 0 10px;scroll-margin-top:88px;display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+  .byc-doc p{font-size:15px;line-height:1.72;color:#3A3A44;margin:12px 0;}
+  .byc-doc .lead{font-size:17px;line-height:1.62;color:#52525B;margin:8px 0 8px;}
+  .byc-doc a.inl{color:var(--red);font-weight:600;text-decoration:none;cursor:pointer;}
+  .byc-doc a.inl:hover{text-decoration:underline;}
+  .byc-doc ul,.byc-doc ol{font-size:15px;line-height:1.72;color:#3A3A44;padding-left:20px;margin:12px 0;}
+  .byc-doc li{margin:8px 0;}
+  .byc-doc li::marker{color:#B9B9B2;}
+  .byc-doc code{font-family:'JetBrains Mono',monospace;font-size:12.5px;background:#F1F1EE;color:#27272E;padding:1.5px 6px;border-radius:5px;white-space:nowrap;}
+  .byc-doc pre{margin:14px 0;padding:16px 18px;background:#14141B;border:1px solid #24242E;border-radius:12px;overflow-x:auto;}
+  .byc-doc pre code{background:none;color:#C9D1D9;padding:0;font-size:12.5px;line-height:1.85;display:block;white-space:pre;}
+  .byc-doc table{width:100%;border-collapse:collapse;font-size:13.5px;margin:16px 0;}
+  .byc-doc th{text-align:left;padding:9px 13px;background:#FAFAF9;border:1px solid #ECECE8;font-weight:700;font-size:11.5px;color:#71717A;text-transform:uppercase;letter-spacing:0.03em;}
+  .byc-doc td{padding:9px 13px;border:1px solid #ECECE8;color:#3A3A44;vertical-align:top;line-height:1.5;}
+  .byc-doc td code{font-size:12px;white-space:normal;}
+  .byc-doc .note{background:#FCF7EF;border:1px solid #F1E3CC;border-left:3px solid #E0A33E;border-radius:8px;padding:13px 16px;font-size:14px;line-height:1.6;color:#6B5733;margin:16px 0;}
+  .byc-doc .note code{background:#F3E8D2;color:#6B5733;}
+  .byc-badge{display:inline-block;font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:700;padding:3px 8px;border-radius:6px;letter-spacing:0.03em;}
+  .byc-get{background:#E7F6EE;color:#1E9E6A;}
+  .byc-post{background:#E8F0FE;color:#2563EB;}
+  .byc-del{background:#FCEEEF;color:#D33241;}
+  .byc-path{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;color:#27272E;}
+  .docs-link{display:block;font-size:13.5px;color:#71717A;text-decoration:none;padding:5px 0;font-weight:500;cursor:pointer;}
+  .docs-link:hover{color:var(--red);}
+  .seg-btn{flex:1;padding:9px;font-size:14px;font-weight:700;font-family:inherit;border:none;border-radius:10px;cursor:pointer;background:transparent;color:#71717A;transition:all .15s;}
+  .seg-btn.active{background:#fff;color:#16161D;box-shadow:0 1px 3px rgba(20,20,30,.12);}
+  .view{display:none;}
+  .view.active{display:block;}
+  .err{color:var(--red);font-size:13px;margin:8px 0 0;min-height:16px;}
+  .progress{background:#EEE;border-radius:6px;height:9px;overflow:hidden;margin-top:10px;}
+  .progress>div{background:var(--red);height:100%;}
+</style>
 </head>
 <body>
-<header>
-  <h1>BoostYourCampaign</h1>
-</header>
-<nav id="main-nav" style="display:none">
-  <a data-view="dashboard" class="active" onclick="showView('dashboard')">Dashboard</a>
-  <a data-view="campaigns" onclick="showView('campaigns')">Campaigns</a>
-  <a data-view="developer" onclick="showView('developer')">Settings › Developer</a>
-</nav>
-<main>
+<div id="app">
 
-  <!-- Auth Section -->
-  <div id="auth-section">
-    <div class="tabs">
-      <div class="tab active" onclick="showTab('login')">Sign in</div>
-      <div class="tab" onclick="showTab('signup')">Create account</div>
-    </div>
-
-    <div id="login-form" class="card">
-      <h2>Sign in</h2>
-      <p class="hint">Sign in to view your campaigns and manage API keys.</p>
-      <label>Email</label>
-      <input type="email" id="login-email" placeholder="you@example.com" />
-      <label>Password</label>
-      <input type="password" id="login-password" />
-      <div id="login-error" class="error-msg"></div>
-      <button onclick="login()">Sign in</button>
-    </div>
-
-    <div id="signup-form" class="card" style="display:none">
-      <h2>Create account</h2>
-      <p class="hint">Sign up to start boosting your campaign.</p>
-      <label>Name</label>
-      <input type="text" id="signup-name" placeholder="Acme Studio" />
-      <label>Email</label>
-      <input type="email" id="signup-email" placeholder="you@example.com" />
-      <label>Password</label>
-      <input type="password" id="signup-password" />
-      <div id="signup-error" class="error-msg"></div>
-      <button onclick="signup()">Create account</button>
-    </div>
-  </div>
-
-  <!-- App Section -->
-  <div id="app-section">
-
-    <!-- DASHBOARD -->
-    <div id="view-dashboard" class="view active">
-      <div class="stat-grid">
-        <div class="stat"><div class="label">Campaigns</div><div class="value" id="s-campaigns">–</div></div>
-        <div class="stat"><div class="label">Total Pledged</div><div class="value" id="s-pledged">–</div></div>
-        <div class="stat"><div class="label">Backers</div><div class="value" id="s-backers">–</div></div>
-        <div class="stat"><div class="label">Events Tracked</div><div class="value" id="s-events">–</div></div>
+  <!-- ════════ AUTH / HOME ════════ -->
+  <div id="view-auth" class="view active">
+  <div style="min-height:100vh;display:flex;flex-direction:column;background:radial-gradient(120% 90% at 88% -8%, #FCEFEF 0%, rgba(252,239,239,0) 46%), #ffffff;">
+    <header style="display:flex;align-items:center;justify-content:space-between;width:100%;max-width:1280px;margin:0 auto;padding:22px 40px;">
+      <div style="display:flex;align-items:center;gap:11px;">
+        <img src="/assets/logo.png" alt="" style="width:30px;height:30px;object-fit:contain;display:block;">
+        <span style="font-weight:800;font-size:18px;letter-spacing:-0.02em;">BoostYourCampaign</span>
       </div>
-      <div class="card">
-        <h2>Recent activity</h2>
-        <p class="hint">The latest events detected across your campaigns — the same events that power your Zaps.</p>
-        <div id="recent-events"><span class="muted">Loading…</span></div>
+      <div style="display:flex;align-items:center;gap:28px;font-size:14.5px;font-weight:600;color:#52525B;">
+        <a class="hov-dark" onclick="openDocs('guide')" style="text-decoration:none;cursor:pointer;">Docs</a>
+        <a class="hov-dark" onclick="openDocs('reference')" style="text-decoration:none;cursor:pointer;">API reference</a>
+        <span style="display:inline-flex;align-items:center;gap:7px;"><span style="width:8px;height:8px;border-radius:50%;background:#22C55E;box-shadow:0 0 0 3px rgba(34,197,94,.16);"></span>All systems operational</span>
       </div>
-    </div>
+    </header>
 
-    <!-- CAMPAIGNS -->
-    <div id="view-campaigns" class="view">
-      <div class="toolbar">
-        <button class="accent" onclick="seedDemo()">+ Add demo campaign</button>
-        <button class="secondary" onclick="loadCampaigns()">Refresh</button>
-      </div>
-      <div class="card">
-        <h2>Create a campaign</h2>
-        <div class="row">
-          <div><label>Name</label><input type="text" id="camp-name" placeholder="My Cool Gadget" /></div>
-          <div><label>Goal</label><input type="number" id="camp-goal" placeholder="50000" /></div>
-          <div style="max-width:120px"><label>Currency</label>
-            <select id="camp-currency"><option>USD</option><option>EUR</option><option>GBP</option><option>CAD</option><option>AUD</option></select>
-          </div>
-          <div style="flex:0 0 auto"><button onclick="createCampaign()">Create</button></div>
+    <main data-grid="hero" style="flex:1;display:grid;grid-template-columns:1.05fr 0.95fr;gap:72px;width:100%;max-width:1280px;margin:0 auto;padding:40px 40px 88px;align-items:center;">
+      <section>
+        <div style="display:inline-flex;align-items:center;gap:8px;padding:6px 13px 6px 9px;background:#FCEEEF;border:1px solid #F6D3D6;border-radius:999px;font-size:12.5px;font-weight:700;letter-spacing:0.04em;color:var(--red);text-transform:uppercase;margin-bottom:26px;">
+          <span style="width:6px;height:6px;border-radius:50%;background:var(--red);"></span>Real-time campaign automation
         </div>
-        <div id="camp-error" class="error-msg"></div>
-      </div>
-      <div id="campaigns-list"><span class="muted">Loading…</span></div>
-    </div>
+        <h1 style="font-size:54px;line-height:1.02;letter-spacing:-0.035em;font-weight:800;margin:0 0 22px;max-width:11ch;">Know the moment your campaign breaks through.</h1>
+        <p style="font-size:18.5px;line-height:1.55;color:#52525B;margin:0 0 36px;max-width:46ch;font-weight:450;">Real-time alerts for funding milestones, momentum drops, and backer surges — so you can act while it matters.</p>
 
-    <!-- DEVELOPER -->
-    <div id="view-developer" class="view">
-      <div class="card">
-        <h2>API Keys</h2>
-        <p class="hint">
-          Use these keys to connect BoostYourCampaign to Zapier and other integrations.
-          Each key is scoped to your account only. Store keys securely — they are shown only once.
-        </p>
-        <div id="new-key-notice" style="display:none"></div>
-        <div id="keys-list"><em class="muted">Loading…</em></div>
-        <hr style="margin: 20px 0; border: none; border-top: 1px solid #eee;" />
-        <label>Key label (optional)</label>
-        <input type="text" id="new-key-label" placeholder="e.g. Zapier Production" style="max-width:320px" />
-        <button onclick="generateKey()">Generate new API key</button>
-      </div>
-    </div>
+        <div style="border-radius:16px;overflow:hidden;background:#14141B;border:1px solid #24242E;box-shadow:0 26px 50px -24px rgba(18,18,28,.5);max-width:520px;">
+          <div style="display:flex;align-items:center;gap:8px;padding:13px 16px;border-bottom:1px solid #22222C;">
+            <span style="width:11px;height:11px;border-radius:50%;background:#3A3A45;"></span>
+            <span style="width:11px;height:11px;border-radius:50%;background:#3A3A45;"></span>
+            <span style="width:11px;height:11px;border-radius:50%;background:#3A3A45;"></span>
+            <span style="margin-left:6px;font-family:'JetBrains Mono',monospace;font-size:12px;color:#6E6E7B;">watch.sh</span>
+            <span style="margin-left:auto;display:inline-flex;align-items:center;gap:6px;padding:4px 10px;border-radius:7px;background:rgba(211,50,65,.14);color:#FF8088;font-size:11.5px;font-weight:700;font-family:'JetBrains Mono',monospace;">▶ run</span>
+          </div>
+          <pre style="margin:0;padding:18px 20px;font-family:'JetBrains Mono',monospace;font-size:13px;line-height:1.85;color:#C9D1D9;overflow-x:auto;"><span style="color:#6E7681;"># Poll for the moment you hit your goal</span>
+<span style="color:#79C0FF;">curl</span> https://api.boostyourcampaign.com/v1/events \
+  -H <span style="color:#7EE787;">"Authorization: Bearer $BYC_KEY"</span> \
+  -G --data-urlencode <span style="color:#7EE787;">type=goal_reached</span></pre>
+        </div>
+      </section>
 
-    <div style="text-align:right; margin-top: 8px;">
-      <a href="#" onclick="logout()" style="font-size:0.8rem;color:#999;">Sign out</a>
-    </div>
+      <section style="display:flex;justify-content:flex-end;">
+        <div style="width:100%;max-width:440px;background:#fff;border:1px solid #ECECE8;border-radius:22px;box-shadow:0 1px 2px rgba(20,20,30,.04),0 22px 60px -22px rgba(20,20,30,.18);padding:32px;">
+          <div style="display:flex;gap:4px;padding:4px;background:#F4F4F1;border-radius:13px;margin-bottom:26px;">
+            <button id="seg-signin" class="seg-btn active" onclick="setMode('signin')">Sign in</button>
+            <button id="seg-signup" class="seg-btn" onclick="setMode('signup')">Create account</button>
+          </div>
+          <h2 id="auth-title" style="font-size:24px;font-weight:800;letter-spacing:-0.02em;margin:0 0 6px;">Sign in</h2>
+          <p id="auth-sub" style="font-size:14.5px;color:#71717A;margin:0 0 26px;line-height:1.5;">Sign in to manage your API keys and usage.</p>
+
+          <div id="name-field" style="display:none;">
+            <label style="display:block;font-size:13px;font-weight:700;margin-bottom:8px;">Name</label>
+            <input id="in-name" type="text" placeholder="Acme Studio" style="width:100%;padding:13px 14px;font-size:14.5px;font-family:inherit;border:1.5px solid #E4E4E0;border-radius:11px;margin-bottom:18px;color:#16161D;background:#fff;">
+          </div>
+
+          <label style="display:block;font-size:13px;font-weight:700;margin-bottom:8px;">Email</label>
+          <input id="in-email" type="email" placeholder="you@example.com" style="width:100%;padding:13px 14px;font-size:14.5px;font-family:inherit;border:1.5px solid #E4E4E0;border-radius:11px;margin-bottom:18px;color:#16161D;background:#fff;">
+
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
+            <label style="font-size:13px;font-weight:700;">Password</label>
+          </div>
+          <div style="position:relative;margin-bottom:14px;">
+            <input id="in-password" type="password" placeholder="••••••••••••" style="width:100%;padding:13px 44px 13px 14px;font-size:14.5px;font-family:inherit;border:1.5px solid #E4E4E0;border-radius:11px;color:#16161D;background:#fff;">
+            <button onclick="togglePw()" aria-label="Toggle password" class="icon-btn" style="position:absolute;right:6px;top:50%;transform:translateY(-50%);border:none;background:transparent;">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+            </button>
+          </div>
+          <div id="auth-error" class="err"></div>
+
+          <button id="auth-cta" onclick="submitAuth()" class="btn-red" style="width:100%;padding:14px;font-size:15px;margin-top:10px;">
+            Sign in
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m13 6 6 6-6 6"></path></svg>
+          </button>
+
+          <div style="display:flex;align-items:center;gap:14px;margin:22px 0;">
+            <div style="flex:1;height:1px;background:#ECECE8;"></div>
+            <span style="font-size:12px;color:#A7A7AE;font-weight:600;letter-spacing:0.04em;">ENCRYPTED IN TRANSIT</span>
+            <div style="flex:1;height:1px;background:#ECECE8;"></div>
+          </div>
+          <p id="auth-switch" style="font-size:13px;color:#71717A;text-align:center;margin:0;line-height:1.5;">Don't have an account? <a onclick="setMode('signup')" style="color:var(--red);font-weight:700;text-decoration:none;cursor:pointer;">Create one</a></p>
+        </div>
+      </section>
+    </main>
+    <div id="auth-footer"></div>
+  </div>
   </div>
 
-</main>
+  <!-- ════════ APP SHELL (dashboard / campaigns / developer) ════════ -->
+  <div id="view-app" class="view">
+  <div style="min-height:100vh;background:#FAFAF9;">
+    <header style="background:#fff;border-bottom:1px solid #ECECE8;position:sticky;top:0;z-index:20;">
+      <div style="display:flex;align-items:center;justify-content:space-between;max-width:1180px;margin:0 auto;padding:0 36px;height:64px;">
+        <div style="display:flex;align-items:center;gap:34px;">
+          <div style="display:flex;align-items:center;gap:10px;cursor:pointer;" onclick="showApp('dashboard')">
+            <img src="/assets/logo.png" alt="" style="width:26px;height:26px;object-fit:contain;display:block;">
+            <span style="font-weight:800;font-size:16px;letter-spacing:-0.02em;">BoostYourCampaign</span>
+          </div>
+          <nav style="display:flex;align-items:center;gap:4px;font-size:14px;font-weight:600;">
+            <a id="tab-dashboard" class="nav-link" onclick="showApp('dashboard')">Dashboard</a>
+            <a id="tab-campaigns" class="nav-link" onclick="showApp('campaigns')">Campaigns</a>
+            <a id="tab-developer" class="nav-link" onclick="showApp('developer')">Developer</a>
+            <a class="nav-link" onclick="openDocs('guide')">Docs</a>
+          </nav>
+        </div>
+        <div style="display:flex;align-items:center;gap:14px;">
+          <span style="display:inline-flex;align-items:center;gap:7px;padding:6px 12px;border-radius:999px;background:#FCEEEF;border:1px solid #F6D3D6;font-size:12.5px;font-weight:700;color:var(--red);"><span style="width:7px;height:7px;border-radius:50%;background:var(--red);"></span>Live mode</span>
+          <button onclick="signOut()" class="hov-dark" style="font-size:13.5px;font-weight:600;color:#52525B;background:transparent;border:none;cursor:pointer;">Sign out</button>
+          <div id="avatar" style="width:34px;height:34px;border-radius:50%;background:#16161D;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;">··</div>
+        </div>
+      </div>
+    </header>
+
+    <div style="max-width:1180px;margin:0 auto;padding:38px 36px 60px;">
+
+      <!-- DASHBOARD OVERVIEW -->
+      <div id="app-dashboard" class="app-view">
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:30px;">
+          <div>
+            <h1 style="font-size:30px;font-weight:800;letter-spacing:-0.025em;margin:0 0 8px;">Dashboard</h1>
+            <p style="font-size:15px;color:#71717A;margin:0;line-height:1.5;">A live overview of your campaigns and the events powering your automations.</p>
+          </div>
+          <button onclick="showApp('campaigns')" class="btn-red" style="flex-shrink:0;padding:12px 18px;font-size:14.5px;">View campaigns
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m13 6 6 6-6 6"></path></svg>
+          </button>
+        </div>
+        <div class="stat-grid" style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px;margin-bottom:30px;">
+          <div style="background:#fff;border:1px solid #ECECE8;border-radius:14px;padding:18px 20px;"><div style="font-size:13px;color:#71717A;font-weight:600;margin-bottom:9px;">Campaigns</div><div id="d-campaigns" style="font-size:26px;font-weight:800;letter-spacing:-0.02em;">–</div></div>
+          <div style="background:#fff;border:1px solid #ECECE8;border-radius:14px;padding:18px 20px;"><div style="font-size:13px;color:#71717A;font-weight:600;margin-bottom:9px;">Total pledged</div><div id="d-pledged" style="font-size:26px;font-weight:800;letter-spacing:-0.02em;">–</div></div>
+          <div style="background:#fff;border:1px solid #ECECE8;border-radius:14px;padding:18px 20px;"><div style="font-size:13px;color:#71717A;font-weight:600;margin-bottom:9px;">Backers</div><div id="d-backers" style="font-size:26px;font-weight:800;letter-spacing:-0.02em;">–</div></div>
+          <div style="background:#fff;border:1px solid #ECECE8;border-radius:14px;padding:18px 20px;"><div style="font-size:13px;color:#71717A;font-weight:600;margin-bottom:9px;">Events tracked</div><div id="d-events" style="font-size:26px;font-weight:800;letter-spacing:-0.02em;">–</div></div>
+        </div>
+        <div style="background:#fff;border:1px solid #ECECE8;border-radius:16px;overflow:hidden;">
+          <div style="padding:16px 22px;border-bottom:1px solid #F0F0EC;font-weight:700;font-size:15px;">Recent activity</div>
+          <div id="d-activity" style="padding:8px 22px 14px;"><div style="color:#9A9AA2;font-size:14px;padding:14px 0;">Loading…</div></div>
+        </div>
+      </div>
+
+      <!-- CAMPAIGNS -->
+      <div id="app-campaigns" class="app-view" style="display:none;">
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:24px;">
+          <div>
+            <h1 style="font-size:30px;font-weight:800;letter-spacing:-0.025em;margin:0 0 8px;">Campaigns</h1>
+            <p style="font-size:15px;color:#71717A;margin:0;line-height:1.5;">Monitor funding progress across every campaign you track.</p>
+          </div>
+          <div style="display:flex;gap:10px;flex-shrink:0;">
+            <button onclick="seedDemo()" class="icon-btn" style="width:auto;padding:0 16px;height:42px;font-size:14px;font-weight:700;">+ Demo campaign</button>
+            <button onclick="loadCampaigns()" class="icon-btn" style="width:auto;padding:0 16px;height:42px;font-size:14px;font-weight:700;">Refresh</button>
+          </div>
+        </div>
+        <div style="background:#fff;border:1px solid #ECECE8;border-radius:16px;padding:22px;margin-bottom:24px;">
+          <div style="font-weight:700;font-size:15px;margin-bottom:16px;">Create a campaign</div>
+          <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;">
+            <div style="flex:2;min-width:180px;"><label style="display:block;font-size:13px;font-weight:700;margin-bottom:8px;">Name</label><input id="c-name" placeholder="My Cool Gadget" style="width:100%;padding:11px 13px;font-size:14px;font-family:inherit;border:1.5px solid #E4E4E0;border-radius:10px;"></div>
+            <div style="flex:1;min-width:120px;"><label style="display:block;font-size:13px;font-weight:700;margin-bottom:8px;">Goal</label><input id="c-goal" type="number" placeholder="50000" style="width:100%;padding:11px 13px;font-size:14px;font-family:inherit;border:1.5px solid #E4E4E0;border-radius:10px;"></div>
+            <div style="width:110px;"><label style="display:block;font-size:13px;font-weight:700;margin-bottom:8px;">Currency</label><select id="c-currency" style="width:100%;padding:11px 13px;font-size:14px;font-family:inherit;border:1.5px solid #E4E4E0;border-radius:10px;background:#fff;"><option>USD</option><option>EUR</option><option>GBP</option><option>CAD</option><option>AUD</option></select></div>
+            <button onclick="createCampaign()" class="btn-red" style="padding:11px 18px;font-size:14px;height:42px;">Create</button>
+          </div>
+          <div id="c-error" class="err"></div>
+        </div>
+        <div id="campaigns-list"></div>
+      </div>
+
+      <!-- DEVELOPER / API KEYS -->
+      <div id="app-developer" class="app-view" style="display:none;">
+        <div style="font-size:13px;color:#A7A7AE;font-weight:600;margin-bottom:14px;">Settings <span style="margin:0 6px;color:#D4D4D0;">/</span> <span style="color:#71717A;">Developer</span></div>
+        <div style="display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:30px;">
+          <div>
+            <h1 style="font-size:30px;font-weight:800;letter-spacing:-0.025em;margin:0 0 8px;">API keys</h1>
+            <p style="font-size:15px;color:#71717A;margin:0;max-width:60ch;line-height:1.5;">These keys authenticate your requests to the BoostYourCampaign API. Keep them secret — anyone with a live key can act on your account.</p>
+          </div>
+          <button onclick="createKey()" class="btn-red" style="flex-shrink:0;padding:12px 18px;font-size:14.5px;">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 5v14M5 12h14"></path></svg>
+            Create secret key
+          </button>
+        </div>
+
+        <div id="newkey-banner" style="display:none;margin-bottom:24px;"></div>
+
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:30px;">
+          <div style="background:#fff;border:1px solid #ECECE8;border-radius:14px;padding:18px 20px;"><div style="font-size:13px;color:#71717A;font-weight:600;margin-bottom:9px;">Campaigns</div><div id="k-campaigns" style="font-size:26px;font-weight:800;letter-spacing:-0.02em;">–</div></div>
+          <div style="background:#fff;border:1px solid #ECECE8;border-radius:14px;padding:18px 20px;"><div style="font-size:13px;color:#71717A;font-weight:600;margin-bottom:9px;">Total pledged</div><div id="k-pledged" style="font-size:26px;font-weight:800;letter-spacing:-0.02em;">–</div></div>
+          <div style="background:#fff;border:1px solid #ECECE8;border-radius:14px;padding:18px 20px;"><div style="font-size:13px;color:#71717A;font-weight:600;margin-bottom:9px;">Active keys</div><div id="k-active" style="font-size:26px;font-weight:800;letter-spacing:-0.02em;">–</div></div>
+        </div>
+
+        <div data-grid="dash" style="display:grid;grid-template-columns:1.55fr 1fr;gap:24px;align-items:start;">
+          <div style="background:#fff;border:1px solid #ECECE8;border-radius:16px;overflow:hidden;">
+            <div style="display:grid;grid-template-columns:1.3fr 2fr 1fr auto;gap:16px;padding:14px 22px;border-bottom:1px solid #F0F0EC;font-size:12px;font-weight:700;letter-spacing:0.04em;text-transform:uppercase;color:#9A9AA2;">
+              <div>Name</div><div>Secret key</div><div>Last used</div><div style="text-align:right;">Actions</div>
+            </div>
+            <div id="keys-rows"></div>
+            <div style="padding:14px 22px;font-size:13px;color:#9A9AA2;display:flex;align-items:center;gap:8px;">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="10"></circle><path d="M12 16v-4M12 8h.01"></path></svg>
+              Live keys are shown once on creation. Store them in a secret manager.
+            </div>
+          </div>
+
+          <div style="background:#14141B;border:1px solid #24242E;border-radius:16px;overflow:hidden;position:sticky;top:88px;box-shadow:0 26px 50px -28px rgba(18,18,28,.45);">
+            <div style="display:flex;align-items:center;gap:8px;padding:14px 18px;border-bottom:1px solid #22222C;">
+              <span style="font-family:'JetBrains Mono',monospace;font-size:12px;color:#8B8B98;font-weight:600;">Quickstart</span>
+              <span style="margin-left:auto;font-family:'JetBrains Mono',monospace;font-size:11px;color:#6E6E7B;">cURL</span>
+            </div>
+            <pre style="margin:0;padding:18px;font-family:'JetBrains Mono',monospace;font-size:12px;line-height:1.9;color:#C9D1D9;overflow-x:auto;"><span style="color:#79C0FF;">curl</span> https://api.boostyourcampaign.com/v1/campaigns \
+  -H <span style="color:#7EE787;">"Authorization: Bearer $BYC_KEY"</span></pre>
+            <div style="padding:14px 18px;border-top:1px solid #22222C;">
+              <a onclick="openDocs('reference')" style="display:inline-flex;align-items:center;gap:7px;font-size:13px;font-weight:700;color:#FF8088;text-decoration:none;cursor:pointer;">Read the API reference
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14"></path><path d="m13 6 6 6-6 6"></path></svg>
+              </a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+    <div id="app-footer"></div>
+  </div>
+  </div>
+
+  <!-- ════════ DOCS ════════ -->
+  <div id="view-docs" class="view">
+    <header style="background:#fff;border-bottom:1px solid #ECECE8;position:sticky;top:0;z-index:20;">
+      <div style="display:flex;align-items:center;justify-content:space-between;max-width:1180px;margin:0 auto;padding:0 36px;height:64px;">
+        <div style="display:flex;align-items:center;gap:11px;cursor:pointer;" onclick="docsBack()">
+          <img src="/assets/logo.png" alt="" style="width:26px;height:26px;object-fit:contain;display:block;">
+          <span style="font-weight:800;font-size:16px;letter-spacing:-0.02em;">BoostYourCampaign</span>
+          <span style="font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;color:#9A9AA2;border:1px solid #ECECE8;border-radius:6px;padding:2px 7px;margin-left:4px;">docs</span>
+        </div>
+        <button onclick="docsBack()" class="hov-dark" style="display:inline-flex;align-items:center;gap:7px;font-size:13.5px;font-weight:600;color:#52525B;background:transparent;border:none;cursor:pointer;">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"></path><path d="m11 18-6-6 6-6"></path></svg>
+          <span id="docs-back-label">Back</span>
+        </button>
+      </div>
+    </header>
+    <div data-docs="wrap" style="display:flex;gap:52px;align-items:flex-start;max-width:1180px;margin:0 auto;padding:34px 36px 96px;">
+      <aside data-docs="aside" style="width:236px;flex-shrink:0;position:sticky;top:88px;">
+        <div style="display:flex;gap:4px;padding:4px;background:#F4F4F1;border-radius:11px;margin-bottom:22px;">
+          <button id="docstab-guide" class="seg-btn active" onclick="setDocsTab('guide')">Guide</button>
+          <button id="docstab-reference" class="seg-btn" onclick="setDocsTab('reference')">Reference</button>
+        </div>
+        <nav id="docs-nav-guide">
+          <a class="docs-link" href="#g-base">Base URL</a>
+          <a class="docs-link" href="#g-quickstart">Quick start</a>
+          <a class="docs-link" href="#g-auth">Authentication</a>
+          <a class="docs-link" href="#g-concepts">Core concepts</a>
+          <a class="docs-link" href="#g-privacy">Privacy by design</a>
+          <a class="docs-link" href="#g-zapier">Zapier</a>
+          <a class="docs-link" href="#g-platforms">Supported platforms</a>
+          <a class="docs-link" href="#g-versioning">Versioning &amp; stability</a>
+          <a class="docs-link" href="#g-support">Support</a>
+        </nav>
+        <nav id="docs-nav-reference" style="display:none;">
+          <a class="docs-link" href="#r-auth">Authentication</a>
+          <a class="docs-link" href="#r-endpoints">Endpoints</a>
+          <a class="docs-link" href="#r-event">The event object</a>
+          <a class="docs-link" href="#r-types">Event types</a>
+          <a class="docs-link" href="#r-rate">Rate limits</a>
+          <a class="docs-link" href="#r-changelog">Changelog</a>
+        </nav>
+      </aside>
+      <main style="flex:1;min-width:0;">
+        <div id="docs-guide" class="byc-doc">
+          <h1 style="font-size:33px;font-weight:800;letter-spacing:-0.025em;margin:0 0 14px;">API Guide</h1>
+          <p class="lead">BoostYourCampaign is a real-time monitoring and automation API for crowdfunding creators. It watches your campaigns and emits <strong>structured events</strong> the moment something important happens — funding milestones crossed, your goal reached, stretch goals unlocked, momentum (velocity) drops, comment spikes, and new backer-facing updates.</p>
+          <p>This guide explains how the API works and how to get started. For the exact request/response shape of every endpoint, see the <a class="inl" onclick="setDocsTab('reference')">API Reference</a>.</p>
+          <h2 id="g-base">Base URL</h2>
+          <pre><code>https://api.boostyourcampaign.com</code></pre>
+          <p>All API routes are versioned under <code>/v1</code>.</p>
+          <h2 id="g-quickstart">Quick start</h2>
+          <ol>
+            <li><strong>Create an account &amp; get an API key.</strong> Sign up → <strong>Developer</strong>, or call <code>POST /v1/auth/signup</code>, which returns your first API key.</li>
+            <li><strong>Make an authenticated request.</strong> Send your key as a Bearer token:
+              <pre><code>curl https://api.boostyourcampaign.com/v1/account \
+  -H "Authorization: Bearer byc_your_api_key_here"</code></pre>
+              A successful response confirms your key works:
+              <pre><code>{ "account": { "id": "acct_50075c0fa2d48727", "name": "Acme Studio" } }</code></pre>
+            </li>
+            <li><strong>Create a campaign</strong> with <code>POST /v1/campaigns</code>.</li>
+            <li><strong>Poll for events</strong> with <code>GET /v1/events?type=...</code>.</li>
+          </ol>
+          <h2 id="g-auth">Authentication</h2>
+          <p>Every endpoint except signup/login and the public health check requires an API key. You can supply it three ways:</p>
+          <table><thead><tr><th>Method</th><th>Example</th></tr></thead><tbody>
+            <tr><td><code>Authorization</code> header (recommended)</td><td><code>Authorization: Bearer byc_xxx</code></td></tr>
+            <tr><td><code>X-API-KEY</code> header</td><td><code>X-API-KEY: byc_xxx</code></td></tr>
+            <tr><td><code>apiKey</code> query parameter</td><td><code>?apiKey=byc_xxx</code></td></tr>
+          </tbody></table>
+          <h3>Key properties</h3>
+          <ul>
+            <li>Keys are <strong>per-account and account-scoped</strong> — a key only ever sees its own account's campaigns and events.</li>
+            <li>Keys are stored <strong>hashed (SHA-256)</strong>, never in plaintext. The raw key is shown <strong>once</strong>, at creation time.</li>
+            <li>You can create multiple keys and revoke any of them individually. Revoking a key immediately stops any Zap or script using it.</li>
+          </ul>
+          <h2 id="g-concepts">Core concepts</h2>
+          <h3>Campaigns</h3>
+          <p>A <strong>campaign</strong> is a crowdfunding project you want to monitor. It has a <code>name</code>, a funding <code>goal</code>, and a <code>currency</code>.</p>
+          <h3>Events</h3>
+          <p>BoostYourCampaign computes events <strong>server-side</strong> and returns them through <code>GET /v1/events</code>. Each event has a <strong>stable, unique <code>id</code></strong> so consumers (like Zapier) can deduplicate reliably.</p>
+          <table><thead><tr><th><code>type</code></th><th>Fires when…</th></tr></thead><tbody>
+            <tr><td><code>funding_milestone</code></td><td>Total pledged crosses a round percentage (every 10% of goal) or round currency amount.</td></tr>
+            <tr><td><code>goal_reached</code></td><td>Total pledged meets or exceeds the goal.</td></tr>
+            <tr><td><code>stretch_goal_reached</code></td><td>Total pledged crosses a defined stretch-goal value.</td></tr>
+            <tr><td><code>velocity_drop</code></td><td>Pledge rate in the last 24h drops ≥40% vs. the prior 24h.</td></tr>
+            <tr><td><code>campaign_update</code></td><td>A new campaign update is posted.</td></tr>
+            <tr><td><code>comment_spike</code></td><td>Comment volume in the last 6h exceeds 3× the 7-day baseline.</td></tr>
+          </tbody></table>
+          <h3>Polling model</h3>
+          <p>Call <code>GET /v1/events?type=&lt;type&gt;</code> on an interval; new events appear newest-first. Because every event <code>id</code> is stable, you only act on ids you haven't seen before.</p>
+          <h2 id="g-privacy">Privacy by design</h2>
+          <p>BoostYourCampaign works with <strong>campaign-level aggregate data only</strong> — never individual backer personal information.</p>
+          <h2 id="g-zapier">Zapier</h2>
+          <p>BoostYourCampaign ships an official Zapier integration so you can route campaign events to Slack, email, Google Sheets, Notion, and 6,000+ other apps with no code. Connect using any API key from <strong>Developer</strong>.</p>
+          <h2 id="g-platforms">Supported platforms</h2>
+          <ul><li><strong>Kickstarter</strong> campaigns are supported today.</li><li><strong>Indiegogo</strong> support is coming soon.</li></ul>
+          <h2 id="g-versioning">Versioning &amp; stability</h2>
+          <p>The API is versioned in the path (<code>/v1</code>). Additive changes may appear within <code>/v1</code> without notice, so ignore unknown fields rather than fail on them.</p>
+          <h2 id="g-support">Support</h2>
+          <p>Questions or integration help: <a class="inl" href="mailto:support@boostyourcampaign.com">support@boostyourcampaign.com</a></p>
+        </div>
+
+        <div id="docs-reference" class="byc-doc" style="display:none;">
+          <h1 style="font-size:33px;font-weight:800;letter-spacing:-0.025em;margin:0 0 14px;">API Reference</h1>
+          <p class="lead">Complete endpoint reference. For concepts and a getting-started walkthrough, see the <a class="inl" onclick="setDocsTab('guide')">API Guide</a>.</p>
+          <ul>
+            <li><strong>Base URL:</strong> <code>https://api.boostyourcampaign.com</code></li>
+            <li><strong>Versioning:</strong> all routes are prefixed with <code>/v1</code></li>
+            <li><strong>Content type:</strong> <code>application/json</code></li>
+            <li><strong>Auth:</strong> Bearer token, <code>X-API-KEY</code> header, or <code>?apiKey=</code> query param</li>
+          </ul>
+          <h2 id="r-auth">Authentication</h2>
+          <pre><code>Authorization: Bearer byc_xxxxxxxxxxxxxxxxxxxxxxxx</code></pre>
+          <h2 id="r-endpoints">Endpoints</h2>
+          <table><thead><tr><th>Method</th><th>Path</th><th>Auth</th><th>Purpose</th></tr></thead><tbody>
+            <tr><td><span class="byc-badge byc-get">GET</span></td><td><code>/health</code></td><td>No</td><td>Liveness check.</td></tr>
+            <tr><td><span class="byc-badge byc-post">POST</span></td><td><code>/v1/auth/signup</code></td><td>No</td><td>Create an account; returns first API key.</td></tr>
+            <tr><td><span class="byc-badge byc-post">POST</span></td><td><code>/v1/auth/login</code></td><td>No</td><td>Verify credentials.</td></tr>
+            <tr><td><span class="byc-badge byc-get">GET</span></td><td><code>/v1/account</code></td><td>Yes</td><td>Verify a key / return account info.</td></tr>
+            <tr><td><span class="byc-badge byc-get">GET</span></td><td><code>/v1/developer/keys</code></td><td>Yes</td><td>List API keys (metadata only).</td></tr>
+            <tr><td><span class="byc-badge byc-post">POST</span></td><td><code>/v1/developer/keys</code></td><td>Yes</td><td>Generate a new API key.</td></tr>
+            <tr><td><span class="byc-badge byc-del">DELETE</span></td><td><code>/v1/developer/keys/:keyId</code></td><td>Yes</td><td>Revoke an API key.</td></tr>
+            <tr><td><span class="byc-badge byc-get">GET</span></td><td><code>/v1/campaigns</code></td><td>Yes</td><td>List campaigns with funding aggregates.</td></tr>
+            <tr><td><span class="byc-badge byc-post">POST</span></td><td><code>/v1/campaigns</code></td><td>Yes</td><td>Create a campaign.</td></tr>
+            <tr><td><span class="byc-badge byc-get">GET</span></td><td><code>/v1/dashboard</code></td><td>Yes</td><td>Account-wide totals + recent events.</td></tr>
+            <tr><td><span class="byc-badge byc-get">GET</span></td><td><code>/v1/events</code></td><td>Yes</td><td>List computed events of a given type.</td></tr>
+            <tr><td><span class="byc-badge byc-post">POST</span></td><td><code>/v1/demo/seed</code></td><td>Yes</td><td>Seed demo data for testing triggers.</td></tr>
+          </tbody></table>
+          <div class="note"><strong>Note for Zapier:</strong> Zapier polling triggers expect a bare array. In the trigger's code, return <code>response.json.events</code> to hand Zapier the array.</div>
+          <h2 id="r-event">The event object</h2>
+          <table><thead><tr><th>Field</th><th>Type</th><th>Description</th></tr></thead><tbody>
+            <tr><td><code>id</code></td><td>string</td><td><strong>Stable, unique</strong> event id. Use as the dedup key.</td></tr>
+            <tr><td><code>type</code></td><td>string</td><td>The event type.</td></tr>
+            <tr><td><code>campaign_id</code> / <code>campaign_name</code></td><td>string</td><td>Owning campaign.</td></tr>
+            <tr><td><code>currency</code></td><td>string</td><td>ISO currency code.</td></tr>
+            <tr><td><code>amount_pledged</code> / <code>goal</code></td><td>number</td><td>Pledged total and goal.</td></tr>
+            <tr><td><code>percent_funded</code> / <code>backer_count</code></td><td>integer</td><td>Funding % and backer count.</td></tr>
+            <tr><td><code>occurred_at</code></td><td>string</td><td>Timestamp the event was recorded.</td></tr>
+            <tr><td><code>data</code></td><td>object</td><td>Type-specific fields.</td></tr>
+          </tbody></table>
+          <h2 id="r-types">Event types</h2>
+          <table><thead><tr><th><code>type</code></th><th><code>data</code> fields</th></tr></thead><tbody>
+            <tr><td><code>funding_milestone</code></td><td><code>milestone_basis</code>, <code>milestone_value</code></td></tr>
+            <tr><td><code>goal_reached</code></td><td><em>(empty object)</em></td></tr>
+            <tr><td><code>stretch_goal_reached</code></td><td><code>stretch_id</code>, <code>stretch_label</code>, <code>stretch_value</code></td></tr>
+            <tr><td><code>velocity_drop</code></td><td><code>window_hours</code>, <code>current_rate</code>, <code>prior_rate</code>, <code>drop_pct</code></td></tr>
+            <tr><td><code>campaign_update</code></td><td><code>update_id</code>, <code>update_title</code></td></tr>
+            <tr><td><code>comment_spike</code></td><td><code>window_hours</code>, <code>comment_count</code>, <code>baseline_count</code></td></tr>
+          </tbody></table>
+          <h2 id="r-rate">Rate limits</h2>
+          <p>Polling integrations should call each <code>type</code> no more than once per minute. Exceeding limits returns <code>429</code>.</p>
+          <h2 id="r-changelog">Changelog</h2>
+          <ul><li><strong>v1</strong> — Initial public release: accounts, API keys, campaigns, dashboard, and six event types.</li></ul>
+        </div>
+      </main>
+    </div>
+    <div id="docs-footer"></div>
+  </div>
+
+  <!-- ════════ PRIVACY ════════ -->
+  <div id="view-privacy" class="view">
+    <header style="background:#fff;border-bottom:1px solid #ECECE8;position:sticky;top:0;z-index:20;">
+      <div style="display:flex;align-items:center;justify-content:space-between;max-width:880px;margin:0 auto;padding:0 36px;height:64px;">
+        <div style="display:flex;align-items:center;gap:11px;cursor:pointer;" onclick="docsBack()"><img src="/assets/logo.png" style="width:26px;height:26px;object-fit:contain;"><span style="font-weight:800;font-size:16px;letter-spacing:-0.02em;">BoostYourCampaign</span></div>
+        <button onclick="docsBack()" class="hov-dark" style="display:inline-flex;align-items:center;gap:7px;font-size:13.5px;font-weight:600;color:#52525B;background:transparent;border:none;cursor:pointer;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"></path><path d="m11 18-6-6 6-6"></path></svg>Back</button>
+      </div>
+    </header>
+    <div style="max-width:880px;margin:0 auto;padding:44px 36px 96px;">
+      <div class="byc-doc" style="max-width:none;">
+        <p style="font-size:12.5px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--red);margin:0 0 8px;">Legal</p>
+        <h1 style="font-size:34px;font-weight:800;letter-spacing:-0.025em;margin:0 0 6px;">Privacy Policy</h1>
+        <p style="font-size:13.5px;color:#9A9AA2;margin:0 0 8px;">Last updated June 18, 2026</p>
+        <p class="lead">This Privacy Policy explains what information BoostYourCampaign processes when you use our API and dashboard. Our guiding principle is simple: we work with campaign-level aggregate data, never individual backer personal information.</p>
+        <h2 style="border-top:none;padding-top:0;margin-top:30px;">1. Information we process</h2>
+        <ul><li><strong>Account information.</strong> The name, email, and password you provide.</li><li><strong>API keys.</strong> Stored <strong>hashed (SHA-256)</strong>, never in plaintext.</li><li><strong>Campaign aggregate data.</strong> Totals, rates, and counts about the campaigns you monitor.</li></ul>
+        <h2>2. What we do not collect</h2>
+        <p>We never collect or store individual backer personal information — no names, emails, or payment details.</p>
+        <h2>3. How we use information</h2>
+        <p>We authenticate API requests, compute and deliver events you subscribe to, operate and secure the service, and respond to support. We do not sell your data.</p>
+        <h2>4. Sharing &amp; integrations</h2>
+        <p>When you connect an integration such as Zapier, events are delivered to the destinations you configure using an API key you control. Revoke that key at any time to stop delivery immediately.</p>
+        <h2>5. Security</h2>
+        <p>API keys are stored hashed, traffic is encrypted in transit, and keys are account-scoped.</p>
+        <h2>6. Data retention</h2>
+        <p>We retain account and campaign-configuration data while your account is active. Request deletion by contacting us.</p>
+        <h2>7. Your rights</h2>
+        <p>You may access, correct, export, or delete your account information by emailing us.</p>
+        <h2>8. Changes</h2>
+        <p>Material changes will be reflected by the "Last updated" date above.</p>
+        <h2>9. Contact</h2>
+        <p>Questions about privacy: <a class="inl" href="mailto:support@boostyourcampaign.com">support@boostyourcampaign.com</a></p>
+      </div>
+    </div>
+    <div id="privacy-footer"></div>
+  </div>
+
+  <!-- ════════ TERMS ════════ -->
+  <div id="view-terms" class="view">
+    <header style="background:#fff;border-bottom:1px solid #ECECE8;position:sticky;top:0;z-index:20;">
+      <div style="display:flex;align-items:center;justify-content:space-between;max-width:880px;margin:0 auto;padding:0 36px;height:64px;">
+        <div style="display:flex;align-items:center;gap:11px;cursor:pointer;" onclick="docsBack()"><img src="/assets/logo.png" style="width:26px;height:26px;object-fit:contain;"><span style="font-weight:800;font-size:16px;letter-spacing:-0.02em;">BoostYourCampaign</span></div>
+        <button onclick="docsBack()" class="hov-dark" style="display:inline-flex;align-items:center;gap:7px;font-size:13.5px;font-weight:600;color:#52525B;background:transparent;border:none;cursor:pointer;"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M19 12H5"></path><path d="m11 18-6-6 6-6"></path></svg>Back</button>
+      </div>
+    </header>
+    <div style="max-width:880px;margin:0 auto;padding:44px 36px 96px;">
+      <div class="byc-doc" style="max-width:none;">
+        <p style="font-size:12.5px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:var(--red);margin:0 0 8px;">Legal</p>
+        <h1 style="font-size:34px;font-weight:800;letter-spacing:-0.025em;margin:0 0 6px;">Terms of Service</h1>
+        <p style="font-size:13.5px;color:#9A9AA2;margin:0 0 8px;">Last updated June 18, 2026</p>
+        <p class="lead">These Terms govern your access to and use of the BoostYourCampaign API, dashboard, and related services. By creating an account or using the Service, you agree to these Terms.</p>
+        <h2 style="border-top:none;padding-top:0;margin-top:30px;">1. The Service</h2>
+        <p>BoostYourCampaign provides real-time monitoring and automation for crowdfunding campaigns, delivering structured events through our API.</p>
+        <h2>2. Accounts &amp; API keys</h2>
+        <p>You are responsible for activity under your account and for keeping your API keys secret. Keys are account-scoped; you may revoke any of them at any time.</p>
+        <h2>3. Acceptable use</h2>
+        <p>You agree not to misuse the Service, including accessing data that is not yours, reverse-engineering the platform, or violating the terms of any crowdfunding platform or applicable law.</p>
+        <h2>4. Rate limits</h2>
+        <p>Polling integrations should call each event type no more than once per minute. We may throttle or suspend access that exceeds reasonable usage.</p>
+        <h2>5. Availability</h2>
+        <p>The Service is provided "as is" and "as available". We do not guarantee uninterrupted or error-free operation.</p>
+        <h2>6. Intellectual property</h2>
+        <p>The Service, including its software, branding, and documentation, is owned by BoostYourCampaign.</p>
+        <h2>7. Disclaimer &amp; limitation of liability</h2>
+        <p>To the maximum extent permitted by law, we disclaim all warranties and shall not be liable for indirect, incidental, or consequential damages.</p>
+        <h2>8. Termination</h2>
+        <p>You may stop using the Service at any time. Revoking your keys immediately stops any integration using them.</p>
+        <h2>9. Changes</h2>
+        <p>Continued use after changes take effect constitutes acceptance of the revised Terms.</p>
+        <h2>10. Contact</h2>
+        <p>Questions about these Terms: <a class="inl" href="mailto:support@boostyourcampaign.com">support@boostyourcampaign.com</a></p>
+      </div>
+    </div>
+    <div id="terms-footer"></div>
+  </div>
+
+</div>
 
 <script>
-  let session = null;
+  // ── State ──────────────────────────────────────────────────
+  let account = null;          // { id, name, email }
+  let returnView = 'auth';     // where docs/legal "Back" goes
+  let mode = 'signin';
+  const KEY = () => localStorage.getItem('byc_key');
+  const setKey = k => localStorage.setItem('byc_key', k);
+  const clearKey = () => localStorage.removeItem('byc_key');
 
-  // ── Helpers ────────────────────────────────────────────────
-  function key() { return sessionStorage.getItem('byc_last_key'); }
+  // ── Fetch helpers ──────────────────────────────────────────
   async function api(path, opts = {}) {
-    const headers = Object.assign({ 'Authorization': 'Bearer ' + key() }, opts.headers || {});
+    const headers = Object.assign({}, opts.headers || {});
+    if (KEY()) headers['Authorization'] = 'Bearer ' + KEY();
     if (opts.body) headers['Content-Type'] = 'application/json';
     const r = await fetch(path, Object.assign({}, opts, { headers }));
     const data = await r.json().catch(() => ({}));
     if (!r.ok) throw new Error(data.message || 'Request failed');
     return data;
   }
-  function fmtMoney(amount, currency) {
-    try { return new Intl.NumberFormat(undefined, { style: 'currency', currency: currency || 'USD', maximumFractionDigits: 0 }).format(amount); }
-    catch { return (currency || '') + ' ' + amount; }
-  }
-  function fmtType(t) { return t.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()); }
-  function timeAgo(iso) {
-    const s = Math.floor((Date.now() - new Date(iso + 'Z').getTime()) / 1000);
-    if (isNaN(s)) return iso;
-    if (s < 60) return 'just now';
-    if (s < 3600) return Math.floor(s/60) + 'm ago';
-    if (s < 86400) return Math.floor(s/3600) + 'h ago';
-    return Math.floor(s/86400) + 'd ago';
+  function money(a, c) { try { return new Intl.NumberFormat(undefined,{style:'currency',currency:c||'USD',maximumFractionDigits:0}).format(a);}catch{return (c||'')+' '+a;} }
+  function num(n){ return new Intl.NumberFormat().format(n); }
+  function titleCase(t){ return t.replace(/_/g,' ').replace(/\b\w/g,c=>c.toUpperCase()); }
+  function timeAgo(iso){ const s=Math.floor((Date.now()-new Date((iso||'').replace(' ','T')+'Z').getTime())/1000); if(isNaN(s))return iso||'—'; if(s<60)return 'just now'; if(s<3600)return Math.floor(s/60)+'m ago'; if(s<86400)return Math.floor(s/3600)+'h ago'; return Math.floor(s/86400)+'d ago'; }
+  function initials(name){ return (name||'··').trim().split(/\s+/).map(w=>w[0]).join('').slice(0,2).toUpperCase()||'··'; }
+
+  // ── View routing ───────────────────────────────────────────
+  function showView(id){ document.querySelectorAll('.view').forEach(v=>v.classList.remove('active')); document.getElementById('view-'+id).classList.add('active'); window.scrollTo(0,0); }
+
+  function openDocs(tab){ returnView = currentBaseView(); showView('docs'); setDocsTab(tab||'guide'); document.getElementById('docs-back-label').textContent = backLabel(); }
+  function openPrivacy(){ returnView = currentBaseView(); showView('privacy'); }
+  function openTerms(){ returnView = currentBaseView(); showView('terms'); }
+  function currentBaseView(){ return account ? 'app' : 'auth'; }
+  function backLabel(){ return returnView==='app' ? 'Back to app' : 'Back to sign in'; }
+  function docsBack(){ if(returnView==='app'){ showView('app'); } else { showView('auth'); } }
+
+  function setDocsTab(tab){
+    const guide = tab!=='reference';
+    document.getElementById('docstab-guide').classList.toggle('active',guide);
+    document.getElementById('docstab-reference').classList.toggle('active',!guide);
+    document.getElementById('docs-guide').style.display = guide?'block':'none';
+    document.getElementById('docs-reference').style.display = guide?'none':'block';
+    document.getElementById('docs-nav-guide').style.display = guide?'block':'none';
+    document.getElementById('docs-nav-reference').style.display = guide?'none':'block';
+    if(!document.getElementById('view-docs').classList.contains('active')) showView('docs');
+    document.getElementById('docs-back-label').textContent = backLabel();
   }
 
   // ── Auth ───────────────────────────────────────────────────
-  function showTab(tab) {
-    document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', (i === 0) === (tab === 'login')));
-    document.getElementById('login-form').style.display = tab === 'login' ? '' : 'none';
-    document.getElementById('signup-form').style.display = tab === 'signup' ? '' : 'none';
+  function setMode(m){
+    mode = m;
+    const signup = m==='signup';
+    document.getElementById('seg-signin').classList.toggle('active',!signup);
+    document.getElementById('seg-signup').classList.toggle('active',signup);
+    document.getElementById('name-field').style.display = signup?'block':'none';
+    document.getElementById('auth-title').textContent = signup?'Create your account':'Sign in';
+    document.getElementById('auth-sub').textContent = signup?'Start building with the BoostYourCampaign API.':'Sign in to manage your API keys and usage.';
+    document.getElementById('auth-cta').childNodes[0].textContent = signup?'Create account ':'Sign in ';
+    document.getElementById('auth-switch').innerHTML = signup
+      ? 'Already have an account? <a onclick="setMode(\'signin\')" style="color:var(--red);font-weight:700;text-decoration:none;cursor:pointer;">Sign in</a>'
+      : "Don't have an account? <a onclick=\"setMode('signup')\" style=\"color:var(--red);font-weight:700;text-decoration:none;cursor:pointer;\">Create one</a>";
+    document.getElementById('auth-error').textContent='';
+  }
+  function togglePw(){ const i=document.getElementById('in-password'); i.type = i.type==='password'?'text':'password'; }
+
+  async function submitAuth(){
+    const err = document.getElementById('auth-error'); err.textContent='';
+    const email = document.getElementById('in-email').value.trim();
+    const password = document.getElementById('in-password').value;
+    try {
+      if(mode==='signup'){
+        const name = document.getElementById('in-name').value.trim();
+        if(!name||!email||!password){ err.textContent='Name, email and password are required.'; return; }
+        const data = await api('/v1/auth/signup',{method:'POST',body:JSON.stringify({name,email,password})});
+        setKey(data.key.raw_key); account = data.account;
+        enterApp(); flashNewKey(data.key.raw_key,'Default');
+        showApp('developer');
+      } else {
+        if(!email||!password){ err.textContent='Email and password are required.'; return; }
+        const data = await api('/v1/auth/login',{method:'POST',body:JSON.stringify({email,password})});
+        account = data.account;
+        if(!KEY()){
+          const k = prompt('Enter an existing API key for this account to continue (find it in Developer, or create a new account to get one):');
+          if(k) setKey(k.trim()); else { err.textContent='An API key is required to load your data.'; return; }
+        }
+        // verify the key matches this account
+        try { await api('/v1/account'); } catch(e){ clearKey(); err.textContent='That API key is invalid. Please try again.'; return; }
+        enterApp(); showApp('dashboard');
+      }
+    } catch(e){ err.textContent = e.message; }
   }
 
-  async function signup() {
-    const name = document.getElementById('signup-name').value.trim();
-    const email = document.getElementById('signup-email').value.trim();
-    const password = document.getElementById('signup-password').value;
-    document.getElementById('signup-error').textContent = '';
-    const r = await fetch('/v1/auth/signup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, email, password }) });
-    const data = await r.json();
-    if (!r.ok) { document.getElementById('signup-error').textContent = data.message; return; }
-    sessionStorage.setItem('byc_last_key', data.key.raw_key);
-    session = data.account;
-    showApp();
-    // Surface the new key under Developer so the user can copy it.
-    showNewKey(data.key.raw_key, 'Default');
+  function enterApp(){
+    document.getElementById('avatar').textContent = initials(account && account.name);
+    showView('app');
   }
+  function signOut(){ account=null; clearKey(); setMode('signin'); showView('auth'); }
 
-  async function login() {
-    const email = document.getElementById('login-email').value.trim();
-    const password = document.getElementById('login-password').value;
-    document.getElementById('login-error').textContent = '';
-    const r = await fetch('/v1/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) });
-    const data = await r.json();
-    if (!r.ok) { document.getElementById('login-error').textContent = data.message; return; }
-    session = data.account;
-    // Login does not return a key. If none is cached for this browser, prompt for one.
-    if (!key()) {
-      const k = prompt('Paste an existing API key to load your data (or cancel and create one under Settings › Developer):');
-      if (k) sessionStorage.setItem('byc_last_key', k.trim());
-    }
-    showApp();
-  }
-
-  function showApp() {
-    document.getElementById('auth-section').style.display = 'none';
-    document.getElementById('app-section').style.display = 'block';
-    document.getElementById('main-nav').style.display = 'flex';
-    showView('dashboard');
-  }
-
-  function logout() {
-    session = null;
-    sessionStorage.removeItem('byc_last_key');
-    document.getElementById('auth-section').style.display = '';
-    document.getElementById('app-section').style.display = 'none';
-    document.getElementById('main-nav').style.display = 'none';
-  }
-
-  // ── View routing ───────────────────────────────────────────
-  function showView(name) {
-    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-    document.getElementById('view-' + name).classList.add('active');
-    document.querySelectorAll('#main-nav a').forEach(a => a.classList.toggle('active', a.dataset.view === name));
-    if (name === 'dashboard') loadDashboard();
-    if (name === 'campaigns') loadCampaigns();
-    if (name === 'developer') loadKeys();
+  // ── App tab switching ──────────────────────────────────────
+  function showApp(tab){
+    showView('app');
+    ['dashboard','campaigns','developer'].forEach(t=>{
+      document.getElementById('app-'+t).style.display = t===tab?'block':'none';
+      document.getElementById('tab-'+t).classList.toggle('active',t===tab);
+    });
+    if(tab==='dashboard') loadDashboard();
+    if(tab==='campaigns') loadCampaigns();
+    if(tab==='developer') loadDeveloper();
+    window.scrollTo(0,0);
   }
 
   // ── Dashboard ──────────────────────────────────────────────
-  async function loadDashboard() {
-    if (!key()) return;
+  async function loadDashboard(){
     try {
-      const { totals, recent_events } = await api('/v1/dashboard');
-      document.getElementById('s-campaigns').textContent = totals.campaign_count;
-      document.getElementById('s-pledged').textContent = fmtMoney(totals.total_pledged, 'USD');
-      document.getElementById('s-backers').textContent = totals.total_backers;
-      document.getElementById('s-events').textContent = totals.total_events;
-      const el = document.getElementById('recent-events');
-      if (!recent_events.length) { el.innerHTML = '<span class="muted">No events yet. Add a demo campaign under Campaigns to generate some.</span>'; return; }
-      el.innerHTML = recent_events.map(e => `
-        <div class="evt">
-          <span><span class="badge">${fmtType(e.type)}</span> &nbsp; ${e.campaign_name}</span>
-          <span class="muted">${timeAgo(e.occurred_at)}</span>
+      const {totals,recent_events} = await api('/v1/dashboard');
+      document.getElementById('d-campaigns').textContent = num(totals.campaign_count);
+      document.getElementById('d-pledged').textContent = money(totals.total_pledged,'USD');
+      document.getElementById('d-backers').textContent = num(totals.total_backers);
+      document.getElementById('d-events').textContent = num(totals.total_events);
+      const el = document.getElementById('d-activity');
+      if(!recent_events.length){ el.innerHTML='<div style="color:#9A9AA2;font-size:14px;padding:14px 0;">No events yet. Add a demo campaign under Campaigns to generate some.</div>'; return; }
+      el.innerHTML = recent_events.map(e=>`
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:13px 0;border-bottom:1px solid #F4F4F0;">
+          <div style="display:flex;align-items:center;gap:12px;">
+            <span class="byc-badge byc-post" style="background:#F3EBEC;color:var(--red);">${titleCase(e.type)}</span>
+            <span style="font-size:14px;font-weight:600;">${e.campaign_name}</span>
+          </div>
+          <span style="font-size:13px;color:#9A9AA2;">${timeAgo(e.occurred_at)}</span>
         </div>`).join('');
-    } catch (e) {
-      document.getElementById('recent-events').innerHTML = '<span class="muted">Could not load data. Make sure an API key is set under Settings › Developer.</span>';
-    }
+    } catch(e){ document.getElementById('d-activity').innerHTML='<div style="color:#9A9AA2;font-size:14px;padding:14px 0;">Could not load data.</div>'; }
   }
 
   // ── Campaigns ──────────────────────────────────────────────
-  async function loadCampaigns() {
-    if (!key()) return;
+  async function loadCampaigns(){
     const el = document.getElementById('campaigns-list');
+    el.innerHTML='<div style="color:#9A9AA2;font-size:14px;padding:8px 0;">Loading…</div>';
     try {
-      const { campaigns } = await api('/v1/campaigns');
-      if (!campaigns.length) { el.innerHTML = '<div class="card"><span class="muted">No campaigns yet. Create one above or click “Add demo campaign”.</span></div>'; return; }
-      el.innerHTML = campaigns.map(c => {
-        const pct = Math.min(c.percent_funded, 100);
-        return `
-        <div class="camp">
-          <h3>${c.name}</h3>
-          <div class="meta">${fmtMoney(c.amount_pledged, c.currency)} of ${fmtMoney(c.goal, c.currency)} &nbsp;·&nbsp; ${c.backer_count} backers &nbsp;·&nbsp; ${c.percent_funded}% funded</div>
+      const {campaigns} = await api('/v1/campaigns');
+      if(!campaigns.length){ el.innerHTML='<div style="background:#fff;border:1px solid #ECECE8;border-radius:16px;padding:28px;color:#9A9AA2;font-size:14px;">No campaigns yet. Create one above or add a demo campaign.</div>'; return; }
+      el.innerHTML = campaigns.map(c=>{ const pct=Math.min(c.percent_funded,100); return `
+        <div style="background:#fff;border:1px solid #ECECE8;border-radius:16px;padding:22px;margin-bottom:14px;">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:16px;">
+            <div style="font-size:16px;font-weight:700;">${c.name}</div>
+            <div style="font-size:13px;font-weight:700;color:${c.percent_funded>=100?'#1E9E6A':'#71717A'};">${c.percent_funded}% funded</div>
+          </div>
+          <div style="font-size:13.5px;color:#71717A;margin-top:6px;">${money(c.amount_pledged,c.currency)} of ${money(c.goal,c.currency)} &nbsp;·&nbsp; ${num(c.backer_count)} backers</div>
           <div class="progress"><div style="width:${pct}%"></div></div>
-        </div>`;
-      }).join('');
-    } catch (e) {
-      el.innerHTML = '<div class="card"><span class="muted">Could not load campaigns.</span></div>';
-    }
+        </div>`; }).join('');
+    } catch(e){ el.innerHTML='<div style="color:#9A9AA2;font-size:14px;padding:8px 0;">Could not load campaigns.</div>'; }
   }
-
-  async function createCampaign() {
-    document.getElementById('camp-error').textContent = '';
-    const name = document.getElementById('camp-name').value.trim();
-    const goal = parseInt(document.getElementById('camp-goal').value);
-    const currency = document.getElementById('camp-currency').value;
-    if (!name || !goal) { document.getElementById('camp-error').textContent = 'Name and goal are required.'; return; }
-    try {
-      await api('/v1/campaigns', { method: 'POST', body: JSON.stringify({ name, goal, currency }) });
-      document.getElementById('camp-name').value = '';
-      document.getElementById('camp-goal').value = '';
-      loadCampaigns();
-    } catch (e) { document.getElementById('camp-error').textContent = e.message; }
+  async function createCampaign(){
+    const err=document.getElementById('c-error'); err.textContent='';
+    const name=document.getElementById('c-name').value.trim();
+    const goal=parseInt(document.getElementById('c-goal').value);
+    const currency=document.getElementById('c-currency').value;
+    if(!name||!goal){ err.textContent='Name and goal are required.'; return; }
+    try { await api('/v1/campaigns',{method:'POST',body:JSON.stringify({name,goal,currency})}); document.getElementById('c-name').value=''; document.getElementById('c-goal').value=''; loadCampaigns(); }
+    catch(e){ err.textContent=e.message; }
   }
-
-  async function seedDemo() {
-    try { await api('/v1/demo/seed', { method: 'POST' }); loadCampaigns(); }
-    catch (e) { alert(e.message); }
-  }
+  async function seedDemo(){ try{ await api('/v1/demo/seed',{method:'POST'}); loadCampaigns(); }catch(e){ alert(e.message); } }
 
   // ── Developer / Keys ───────────────────────────────────────
-  async function loadKeys() {
-    const el = document.getElementById('keys-list');
-    if (!key()) { el.innerHTML = '<em class="muted">Generate a key to get started.</em>'; return; }
+  async function loadDeveloper(){
     try {
-      const { keys } = await api('/v1/developer/keys');
-      if (!keys.length) { el.innerHTML = '<em class="muted">No keys yet. Generate one below.</em>'; return; }
-      el.innerHTML = keys.map(k => `
-        <div class="key-row">
-          <span><strong>${k.label}</strong> &nbsp; <span class="key-prefix">${k.key_prefix}</span></span>
-          <span class="muted">${k.created_at.slice(0,10)}</span>
-          <button class="danger" style="padding:6px 12px;font-size:0.8rem" onclick="revokeKey('${k.id}')">Revoke</button>
-        </div>`).join('');
-    } catch (e) { el.innerHTML = '<em class="muted">Could not load keys.</em>'; }
-  }
-
-  async function generateKey() {
-    const label = document.getElementById('new-key-label').value.trim() || 'Default';
-    if (!key()) { alert('Please sign in first.'); return; }
-    try {
-      const { key: newKey } = await api('/v1/developer/keys', { method: 'POST', body: JSON.stringify({ label }) });
-      showNewKey(newKey.raw_key, label);
-      loadKeys();
-    } catch (e) { alert(e.message); }
-  }
-
-  function showNewKey(rawKey, label) {
-    sessionStorage.setItem('byc_last_key', rawKey);
-    const n = document.getElementById('new-key-notice');
-    n.style.display = '';
-    n.innerHTML = `
-      <div class="notice success">
-        <strong>New key generated: ${label}</strong><br/>
-        Copy it now — it won't be shown again.
-        <div class="key-value">${rawKey}</div>
-      </div>`;
-  }
-
-  async function revokeKey(keyId) {
-    if (!confirm('Revoke this key? Any Zaps using it will stop working.')) return;
-    await api('/v1/developer/keys/' + keyId, { method: 'DELETE' });
+      const {totals} = await api('/v1/dashboard');
+      document.getElementById('k-campaigns').textContent = num(totals.campaign_count);
+      document.getElementById('k-pledged').textContent = money(totals.total_pledged,'USD');
+    } catch(e){}
     loadKeys();
   }
+  async function loadKeys(){
+    const el = document.getElementById('keys-rows');
+    el.innerHTML='<div style="padding:18px 22px;color:#9A9AA2;font-size:14px;">Loading…</div>';
+    try {
+      const {keys} = await api('/v1/developer/keys');
+      document.getElementById('k-active').textContent = num(keys.length);
+      if(!keys.length){ el.innerHTML='<div style="padding:24px 22px;color:#9A9AA2;font-size:14px;">No keys yet. Click “Create secret key”.</div>'; return; }
+      el.innerHTML = keys.map(k=>`
+        <div style="display:grid;grid-template-columns:1.3fr 2fr 1fr auto;gap:16px;padding:18px 22px;border-bottom:1px solid #F4F4F0;align-items:center;animation:bycRowIn .25s ease;">
+          <div>
+            <div style="display:flex;align-items:center;gap:8px;">
+              <span style="font-size:14.5px;font-weight:700;">${k.label||'Default'}</span>
+              <span class="byc-badge" style="background:#FCEEEF;color:var(--red);border:1px solid #F6D3D6;">Live</span>
+            </div>
+            <div style="font-size:12px;color:#A7A7AE;margin-top:3px;">Created ${(k.created_at||'').slice(0,10)}</div>
+          </div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:13px;color:#3A3A44;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;">${k.key_prefix||'byc_••••'}••••••••</div>
+          <div style="font-size:13.5px;color:#71717A;">${k.last_used_at?timeAgo(k.last_used_at):'Never'}</div>
+          <div style="display:flex;align-items:center;justify-content:flex-end;gap:4px;">
+            <button onclick="revokeKey('${k.id}')" title="Revoke" class="icon-btn danger">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18M8 6V4h8v2M6 6l1 14h10l1-14"></path></svg>
+            </button>
+          </div>
+        </div>`).join('');
+    } catch(e){ el.innerHTML='<div style="padding:18px 22px;color:#9A9AA2;font-size:14px;">Could not load keys.</div>'; }
+  }
+  async function createKey(){
+    const label = prompt('Name this key (e.g. "Zapier Production"):','Default');
+    if(label===null) return;
+    try { const {key} = await api('/v1/developer/keys',{method:'POST',body:JSON.stringify({label:label||'Default'})}); flashNewKey(key.raw_key,label||'Default'); loadKeys(); }
+    catch(e){ alert(e.message); }
+  }
+  function flashNewKey(raw,label){
+    const b = document.getElementById('newkey-banner');
+    b.style.display='block';
+    b.innerHTML = `
+      <div style="background:#FCF7EF;border:1px solid #F1E3CC;border-left:3px solid #E0A33E;border-radius:12px;padding:16px 18px;">
+        <div style="font-weight:700;font-size:14px;color:#6B5733;margin-bottom:8px;">New key “${label}” created — copy it now, it won't be shown again.</div>
+        <div style="display:flex;gap:8px;align-items:center;">
+          <code style="flex:1;font-family:'JetBrains Mono',monospace;font-size:13px;background:#fff;border:1px solid #F1E3CC;border-radius:8px;padding:10px 12px;color:#27272E;word-break:break-all;">${raw}</code>
+          <button onclick="copyText('${raw}',this)" class="btn-red" style="padding:10px 14px;font-size:13px;">Copy</button>
+        </div>
+      </div>`;
+  }
+  function copyText(t,btn){ try{navigator.clipboard.writeText(t);}catch(_){} if(btn){const o=btn.textContent;btn.textContent='Copied';setTimeout(()=>btn.textContent=o,1400);} }
+  async function revokeKey(id){
+    if(!confirm('Revoke this key? Any Zaps or scripts using it will stop working.')) return;
+    try { await api('/v1/developer/keys/'+id,{method:'DELETE'}); loadKeys(); } catch(e){ alert(e.message); }
+  }
+
+  // ── Shared footer (injected into each view) ────────────────
+  const FOOTER = `
+    <footer style="border-top:1px solid #ECECE8;background:#fff;">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:20px;flex-wrap:wrap;max-width:1180px;margin:0 auto;padding:26px 36px;">
+        <div style="display:flex;align-items:center;gap:10px;"><img src="/assets/logo.png" style="width:22px;height:22px;object-fit:contain;"><span style="font-size:13.5px;color:#71717A;">© 2026 BoostYourCampaign. All rights reserved.</span></div>
+        <div style="display:flex;align-items:center;gap:26px;font-size:13.5px;font-weight:600;">
+          <a class="hov-red" onclick="openPrivacy()" style="color:#52525B;text-decoration:none;cursor:pointer;">Privacy Policy</a>
+          <a class="hov-red" onclick="openTerms()" style="color:#52525B;text-decoration:none;cursor:pointer;">Terms of Service</a>
+          <a class="hov-red" onclick="openDocs('guide')" style="color:#52525B;text-decoration:none;cursor:pointer;">Docs</a>
+          <a class="hov-red" href="mailto:support@boostyourcampaign.com" style="color:#52525B;text-decoration:none;">Support</a>
+        </div>
+      </div>
+    </footer>`;
+  ['auth-footer','app-footer','docs-footer','privacy-footer','terms-footer'].forEach(id=>{ const el=document.getElementById(id); if(el) el.innerHTML=FOOTER; });
+
+  // ── Boot: resume session if a key is stored ────────────────
+  (async function boot(){
+    if(KEY()){
+      try { const d = await api('/v1/account'); account = d.account; enterApp(); showApp('dashboard'); return; }
+      catch(e){ clearKey(); }
+    }
+    setMode('signin'); showView('auth');
+  })();
 </script>
 </body>
 </html>
