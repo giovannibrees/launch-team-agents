@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>BoostYourCampaign – Settings › Developer</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; color: #111; }
+    header { background: #1a1a2e; color: #fff; padding: 16px 32px; display: flex; align-items: center; gap: 16px; }
+    header h1 { font-size: 1.2rem; font-weight: 600; }
+    nav { background: #fff; border-bottom: 1px solid #e0e0e0; padding: 0 32px; display: flex; gap: 24px; }
+    nav a { display: block; padding: 12px 0; font-size: 0.9rem; color: #555; text-decoration: none; border-bottom: 2px solid transparent; }
+    nav a.active { color: #1a1a2e; border-bottom-color: #1a1a2e; font-weight: 600; }
+    main { max-width: 760px; margin: 40px auto; padding: 0 16px; }
+    .card { background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 28px; margin-bottom: 24px; }
+    h2 { font-size: 1.1rem; margin-bottom: 8px; }
+    p.hint { font-size: 0.85rem; color: #666; margin-bottom: 20px; }
+    label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; }
+    input, select { width: 100%; padding: 8px 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem; margin-bottom: 14px; }
+    button { background: #1a1a2e; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; font-size: 0.9rem; cursor: pointer; }
+    button.danger { background: #c0392b; }
+    button:hover { opacity: 0.88; }
+    .key-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f0f0f0; font-size: 0.9rem; }
+    .key-row:last-child { border-bottom: none; }
+    .key-prefix { font-family: monospace; color: #333; }
+    .key-value { font-family: monospace; background: #f0f4ff; border: 1px solid #c3cfe2; border-radius: 4px; padding: 8px 12px; width: 100%; margin: 12px 0; font-size: 0.9rem; word-break: break-all; }
+    .notice { background: #fff8e1; border: 1px solid #f9a825; border-radius: 6px; padding: 12px 16px; font-size: 0.85rem; margin-bottom: 16px; }
+    .success { background: #e8f5e9; border-color: #43a047; }
+    .error-msg { color: #c0392b; font-size: 0.85rem; margin-top: -10px; margin-bottom: 12px; }
+    #auth-section { display: block; }
+    #app-section { display: none; }
+    .tabs { display: flex; gap: 12px; margin-bottom: 24px; }
+    .tab { padding: 8px 18px; border-radius: 20px; border: 1px solid #ccc; background: #fff; cursor: pointer; font-size: 0.85rem; }
+    .tab.active { background: #1a1a2e; color: #fff; border-color: #1a1a2e; }
+  </style>
+</head>
+<body>
+<header>
+  <h1>BoostYourCampaign</h1>
+</header>
+<nav>
+  <a href="#">Dashboard</a>
+  <a href="#">Campaigns</a>
+  <a href="#" class="active">Settings › Developer</a>
+</nav>
+<main>
+
+  <!-- Auth Section -->
+  <div id="auth-section">
+    <div class="tabs">
+      <div class="tab active" onclick="showTab('login')">Sign in</div>
+      <div class="tab" onclick="showTab('signup')">Create account</div>
+    </div>
+
+    <div id="login-form" class="card">
+      <h2>Sign in</h2>
+      <p class="hint">Sign in to manage your API keys.</p>
+      <label>Email</label>
+      <input type="email" id="login-email" placeholder="you@example.com" />
+      <label>Password</label>
+      <input type="password" id="login-password" />
+      <div id="login-error" class="error-msg"></div>
+      <button onclick="login()">Sign in</button>
+    </div>
+
+    <div id="signup-form" class="card" style="display:none">
+      <h2>Create account</h2>
+      <p class="hint">Sign up to start boosting your campaign.</p>
+      <label>Name</label>
+      <input type="text" id="signup-name" placeholder="Acme Studio" />
+      <label>Email</label>
+      <input type="email" id="signup-email" placeholder="you@example.com" />
+      <label>Password</label>
+      <input type="password" id="signup-password" />
+      <div id="signup-error" class="error-msg"></div>
+      <button onclick="signup()">Create account</button>
+    </div>
+  </div>
+
+  <!-- App Section -->
+  <div id="app-section">
+    <div class="card">
+      <h2>API Keys</h2>
+      <p class="hint">
+        Use these keys to connect BoostYourCampaign to Zapier and other integrations.
+        Each key is scoped to your account only. Store keys securely — they are shown only once.
+      </p>
+
+      <div id="new-key-notice" style="display:none"></div>
+
+      <div id="keys-list"><em style="color:#999;font-size:0.85rem">Loading…</em></div>
+
+      <hr style="margin: 20px 0; border: none; border-top: 1px solid #eee;" />
+
+      <label>Key label (optional)</label>
+      <input type="text" id="new-key-label" placeholder="e.g. Zapier Production" style="max-width:320px" />
+      <button onclick="generateKey()">Generate new API key</button>
+    </div>
+
+    <div style="text-align:right; margin-top: 8px;">
+      <a href="#" onclick="logout()" style="font-size:0.8rem;color:#999;">Sign out</a>
+    </div>
+  </div>
+
+</main>
+
+<script>
+  let session = null; // { id, name, email, initKey }
+
+  function showTab(tab) {
+    document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', (i === 0) === (tab === 'login')));
+    document.getElementById('login-form').style.display = tab === 'login' ? '' : 'none';
+    document.getElementById('signup-form').style.display = tab === 'signup' ? '' : 'none';
+  }
+
+  async function signup() {
+    const name = document.getElementById('signup-name').value.trim();
+    const email = document.getElementById('signup-email').value.trim();
+    const password = document.getElementById('signup-password').value;
+    document.getElementById('signup-error').textContent = '';
+    const r = await fetch('/v1/auth/signup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, email, password }) });
+    const data = await r.json();
+    if (!r.ok) { document.getElementById('signup-error').textContent = data.message; return; }
+    // Auto-generate first key
+    const kr = await fetch('/v1/developer/keys/init', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password, label: 'Default' }) });
+    const kdata = await kr.json();
+    session = { ...data.account, initKey: kdata.key.raw_key };
+    showApp();
+  }
+
+  async function login() {
+    const email = document.getElementById('login-email').value.trim();
+    const password = document.getElementById('login-password').value;
+    document.getElementById('login-error').textContent = '';
+    const r = await fetch('/v1/auth/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password }) });
+    const data = await r.json();
+    if (!r.ok) { document.getElementById('login-error').textContent = data.message; return; }
+    session = data.account;
+    // For login we need an existing key to call the keys API — store email/password temporarily for key init
+    session._email = email; session._password = password;
+    showApp();
+  }
+
+  function showApp() {
+    document.getElementById('auth-section').style.display = 'none';
+    document.getElementById('app-section').style.display = 'block';
+    if (session.initKey) {
+      showNewKey(session.initKey, 'Default');
+      session.initKey = null;
+    }
+    loadKeys();
+  }
+
+  function logout() { session = null; document.getElementById('auth-section').style.display = ''; document.getElementById('app-section').style.display = 'none'; }
+
+  async function apiKey() {
+    // Use the last generated raw key stored in sessionStorage as auth
+    return sessionStorage.getItem('byc_last_key');
+  }
+
+  async function loadKeys() {
+    const key = sessionStorage.getItem('byc_last_key');
+    if (!key) { document.getElementById('keys-list').innerHTML = '<em style="color:#999;font-size:0.85rem">Generate a key to get started.</em>'; return; }
+    const r = await fetch('/v1/developer/keys', { headers: { 'Authorization': 'Bearer ' + key } });
+    if (!r.ok) { document.getElementById('keys-list').innerHTML = '<em style="color:#999;font-size:0.85rem">Could not load keys.</em>'; return; }
+    const { keys } = await r.json();
+    if (!keys.length) { document.getElementById('keys-list').innerHTML = '<em style="color:#999;font-size:0.85rem">No keys yet. Generate one below.</em>'; return; }
+    document.getElementById('keys-list').innerHTML = keys.map(k => `
+      <div class="key-row">
+        <span><strong>${k.label}</strong> &nbsp; <span class="key-prefix">${k.prefix}</span></span>
+        <span style="font-size:0.78rem;color:#999">${k.created_at.slice(0,10)}</span>
+        <button class="danger" style="padding:6px 12px;font-size:0.8rem" onclick="revokeKey('${k.id}')">Revoke</button>
+      </div>
+    `).join('');
+  }
+
+  async function generateKey() {
+    const label = document.getElementById('new-key-label').value.trim() || 'Default';
+    const key = sessionStorage.getItem('byc_last_key');
+    if (!key) { alert('Please sign in first.'); return; }
+    const r = await fetch('/v1/developer/keys', { method: 'POST', headers: { 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json' }, body: JSON.stringify({ label }) });
+    const data = await r.json();
+    if (!r.ok) { alert(data.message); return; }
+    showNewKey(data.key.raw_key, label);
+    loadKeys();
+  }
+
+  function showNewKey(rawKey, label) {
+    sessionStorage.setItem('byc_last_key', rawKey);
+    document.getElementById('new-key-notice').style.display = '';
+    document.getElementById('new-key-notice').innerHTML = `
+      <div class="notice success">
+        <strong>New key generated: ${label}</strong><br/>
+        Copy it now — it won't be shown again.
+        <div class="key-value">${rawKey}</div>
+      </div>`;
+  }
+
+  async function revokeKey(keyId) {
+    if (!confirm('Revoke this key? Any Zaps using it will stop working.')) return;
+    const key = sessionStorage.getItem('byc_last_key');
+    await fetch('/v1/developer/keys/' + keyId, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + key } });
+    loadKeys();
+  }
+</script>
+</body>
+</html>
