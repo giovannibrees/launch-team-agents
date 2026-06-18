@@ -8,13 +8,23 @@ function hashKey(rawKey) {
 }
 
 function requireApiKey(req, res, next) {
+  // Accept the API key via Authorization header (Bearer), the X-API-KEY header,
+  // or an apiKey query param. Zapier may send it any of these ways.
   const header = req.headers['authorization'] || '';
   const match = header.match(/^Bearer\s+(.+)$/i);
-  if (!match) {
-    return res.status(401).json({ message: 'Missing or malformed Authorization header. Expected: Bearer <apiKey>' });
+
+  let rawKey = null;
+  if (match) {
+    rawKey = match[1].trim();
+  } else if (req.headers['x-api-key']) {
+    rawKey = String(req.headers['x-api-key']).trim();
+  } else if (req.query && req.query.apiKey) {
+    rawKey = String(req.query.apiKey).trim();
   }
 
-  const rawKey = match[1].trim();
+  if (!rawKey) {
+    return res.status(401).json({ message: 'Missing API key. Provide it as a Bearer token, X-API-KEY header, or apiKey query parameter.' });
+  }
   const hash = hashKey(rawKey);
   const db = getDb();
 
