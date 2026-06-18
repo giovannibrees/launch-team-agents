@@ -1,0 +1,19 @@
+{
+  "name": "zapier-boostyourcampaign",
+  "version": "1.0.0",
+  "description": "Zapier integration for BoostYourCampaign – automate campaign milestone alerts, velocity tracking, and update notifications.",
+  "main": "index.js",
+  "scripts": {
+    "test": "zapier test"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "dependencies": {
+    "zapier-platform-core": "15.5.1"
+  },
+  "devDependencies": {
+    "jest": "^29.0.0"
+  },
+  "private": true
+}
