@@ -11,11 +11,46 @@ router.get('/campaigns', requireApiKey, (req, res) => {
   const limit = Math.min(parseInt(req.query.limit) || 100, 100);
   const db = getDb();
   const campaigns = db.prepare(`
-    SELECT id, name, goal, currency, created_at
-    FROM campaigns WHERE account_id = ?
-    ORDER BY created_at DESC LIMIT ?
-  `).all(req.account.id, limit);
+    SELECT c.id, c.name, c.goal, c.currency, c.created_at,
+           COALESCE(p.total, 0)   AS amount_pledged,
+           COALESCE(p.backers, 0) AS backer_count
+    FROM campaigns c
+    LEFT JOIN (
+      SELECT campaign_id, SUM(amount) AS total, COUNT(*) AS backers
+      FROM pledges GROUP BY campaign_id
+    ) p ON p.campaign_id = c.id
+    WHERE c.account_id = ?
+    ORDER BY c.created_at DESC LIMIT ?
+  `).all(req.account.id, limit).map(c => ({
+    ...c,
+    percent_funded: c.goal > 0 ? Math.round((c.amount_pledged / c.goal) * 100) : 0,
+  }));
   res.json({ campaigns });
+});
+
+// Aggregate dashboard stats across all of the account's campaigns.
+router.get('/dashboard', requireApiKey, (req, res) => {
+  const db = getDb();
+  const totals = db.prepare(`
+    SELECT
+      (SELECT COUNT(*) FROM campaigns WHERE account_id = ?) AS campaign_count,
+      (SELECT COALESCE(SUM(amount), 0) FROM pledges p
+         JOIN campaigns c ON c.id = p.campaign_id WHERE c.account_id = ?) AS total_pledged,
+      (SELECT COUNT(*) FROM pledges p
+         JOIN campaigns c ON c.id = p.campaign_id WHERE c.account_id = ?) AS total_backers,
+      (SELECT COUNT(*) FROM emitted_events e
+         JOIN campaigns c ON c.id = e.campaign_id WHERE c.account_id = ?) AS total_events
+  `).get(req.account.id, req.account.id, req.account.id, req.account.id);
+
+  const recentEvents = db.prepare(`
+    SELECT e.id, e.type, e.occurred_at, c.name AS campaign_name, c.currency
+    FROM emitted_events e
+    JOIN campaigns c ON c.id = e.campaign_id
+    WHERE c.account_id = ?
+    ORDER BY e.occurred_at DESC LIMIT 15
+  `).all(req.account.id);
+
+  res.json({ totals, recent_events: recentEvents });
 });
 
 router.post('/campaigns', requireApiKey, (req, res) => {

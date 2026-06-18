@@ -3,23 +3,25 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>BoostYourCampaign – Settings › Developer</title>
+  <title>BoostYourCampaign</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
-    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; color: #111; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f7; color: #111; }
     header { background: #1a1a2e; color: #fff; padding: 16px 32px; display: flex; align-items: center; gap: 16px; }
     header h1 { font-size: 1.2rem; font-weight: 600; }
     nav { background: #fff; border-bottom: 1px solid #e0e0e0; padding: 0 32px; display: flex; gap: 24px; }
-    nav a { display: block; padding: 12px 0; font-size: 0.9rem; color: #555; text-decoration: none; border-bottom: 2px solid transparent; }
-    nav a.active { color: #1a1a2e; border-bottom-color: #1a1a2e; font-weight: 600; }
-    main { max-width: 760px; margin: 40px auto; padding: 0 16px; }
-    .card { background: #fff; border: 1px solid #e0e0e0; border-radius: 8px; padding: 28px; margin-bottom: 24px; }
+    nav a { display: block; padding: 12px 0; font-size: 0.9rem; color: #555; text-decoration: none; border-bottom: 2px solid transparent; cursor: pointer; }
+    nav a.active { color: #1a1a2e; border-bottom-color: #D83A45; font-weight: 600; }
+    main { max-width: 860px; margin: 40px auto; padding: 0 16px; }
+    .card { background: #fff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 28px; margin-bottom: 24px; }
     h2 { font-size: 1.1rem; margin-bottom: 8px; }
     p.hint { font-size: 0.85rem; color: #666; margin-bottom: 20px; }
     label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 6px; }
     input, select { width: 100%; padding: 8px 12px; border: 1px solid #ccc; border-radius: 6px; font-size: 0.9rem; margin-bottom: 14px; }
     button { background: #1a1a2e; color: #fff; border: none; padding: 10px 20px; border-radius: 6px; font-size: 0.9rem; cursor: pointer; }
+    button.secondary { background: #fff; color: #1a1a2e; border: 1px solid #ccc; }
     button.danger { background: #c0392b; }
+    button.accent { background: #D83A45; }
     button:hover { opacity: 0.88; }
     .key-row { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f0f0f0; font-size: 0.9rem; }
     .key-row:last-child { border-bottom: none; }
@@ -28,21 +30,39 @@
     .notice { background: #fff8e1; border: 1px solid #f9a825; border-radius: 6px; padding: 12px 16px; font-size: 0.85rem; margin-bottom: 16px; }
     .success { background: #e8f5e9; border-color: #43a047; }
     .error-msg { color: #c0392b; font-size: 0.85rem; margin-top: -10px; margin-bottom: 12px; }
-    #auth-section { display: block; }
-    #app-section { display: none; }
     .tabs { display: flex; gap: 12px; margin-bottom: 24px; }
     .tab { padding: 8px 18px; border-radius: 20px; border: 1px solid #ccc; background: #fff; cursor: pointer; font-size: 0.85rem; }
     .tab.active { background: #1a1a2e; color: #fff; border-color: #1a1a2e; }
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-bottom: 8px; }
+    .stat { background: #fff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 20px; }
+    .stat .label { font-size: 0.78rem; color: #888; text-transform: uppercase; letter-spacing: 0.04em; }
+    .stat .value { font-size: 1.7rem; font-weight: 700; margin-top: 6px; color: #1a1a2e; }
+    .progress { background: #eee; border-radius: 6px; height: 10px; overflow: hidden; margin-top: 8px; }
+    .progress > div { background: #D83A45; height: 100%; }
+    .camp { border: 1px solid #e0e0e0; border-radius: 10px; padding: 20px; margin-bottom: 16px; background: #fff; }
+    .camp h3 { font-size: 1rem; margin-bottom: 4px; }
+    .camp .meta { font-size: 0.82rem; color: #666; margin-bottom: 6px; }
+    .evt { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid #f0f0f0; font-size: 0.88rem; }
+    .evt:last-child { border-bottom: none; }
+    .badge { display: inline-block; font-size: 0.72rem; padding: 2px 8px; border-radius: 12px; background: #f0f4ff; color: #3b4cca; font-weight: 600; }
+    .muted { color: #999; font-size: 0.85rem; }
+    .row { display: flex; gap: 12px; align-items: flex-end; flex-wrap: wrap; }
+    .row > div { flex: 1; min-width: 140px; }
+    .toolbar { display: flex; gap: 10px; margin-bottom: 18px; flex-wrap: wrap; }
+    #auth-section { display: block; }
+    #app-section { display: none; }
+    .view { display: none; }
+    .view.active { display: block; }
   </style>
 </head>
 <body>
 <header>
   <h1>BoostYourCampaign</h1>
 </header>
-<nav>
-  <a href="#">Dashboard</a>
-  <a href="#">Campaigns</a>
-  <a href="#" class="active">Settings › Developer</a>
+<nav id="main-nav" style="display:none">
+  <a data-view="dashboard" class="active" onclick="showView('dashboard')">Dashboard</a>
+  <a data-view="campaigns" onclick="showView('campaigns')">Campaigns</a>
+  <a data-view="developer" onclick="showView('developer')">Settings › Developer</a>
 </nav>
 <main>
 
@@ -55,7 +75,7 @@
 
     <div id="login-form" class="card">
       <h2>Sign in</h2>
-      <p class="hint">Sign in to manage your API keys.</p>
+      <p class="hint">Sign in to view your campaigns and manage API keys.</p>
       <label>Email</label>
       <input type="email" id="login-email" placeholder="you@example.com" />
       <label>Password</label>
@@ -80,22 +100,58 @@
 
   <!-- App Section -->
   <div id="app-section">
-    <div class="card">
-      <h2>API Keys</h2>
-      <p class="hint">
-        Use these keys to connect BoostYourCampaign to Zapier and other integrations.
-        Each key is scoped to your account only. Store keys securely — they are shown only once.
-      </p>
 
-      <div id="new-key-notice" style="display:none"></div>
+    <!-- DASHBOARD -->
+    <div id="view-dashboard" class="view active">
+      <div class="stat-grid">
+        <div class="stat"><div class="label">Campaigns</div><div class="value" id="s-campaigns">–</div></div>
+        <div class="stat"><div class="label">Total Pledged</div><div class="value" id="s-pledged">–</div></div>
+        <div class="stat"><div class="label">Backers</div><div class="value" id="s-backers">–</div></div>
+        <div class="stat"><div class="label">Events Tracked</div><div class="value" id="s-events">–</div></div>
+      </div>
+      <div class="card">
+        <h2>Recent activity</h2>
+        <p class="hint">The latest events detected across your campaigns — the same events that power your Zaps.</p>
+        <div id="recent-events"><span class="muted">Loading…</span></div>
+      </div>
+    </div>
 
-      <div id="keys-list"><em style="color:#999;font-size:0.85rem">Loading…</em></div>
+    <!-- CAMPAIGNS -->
+    <div id="view-campaigns" class="view">
+      <div class="toolbar">
+        <button class="accent" onclick="seedDemo()">+ Add demo campaign</button>
+        <button class="secondary" onclick="loadCampaigns()">Refresh</button>
+      </div>
+      <div class="card">
+        <h2>Create a campaign</h2>
+        <div class="row">
+          <div><label>Name</label><input type="text" id="camp-name" placeholder="My Cool Gadget" /></div>
+          <div><label>Goal</label><input type="number" id="camp-goal" placeholder="50000" /></div>
+          <div style="max-width:120px"><label>Currency</label>
+            <select id="camp-currency"><option>USD</option><option>EUR</option><option>GBP</option><option>CAD</option><option>AUD</option></select>
+          </div>
+          <div style="flex:0 0 auto"><button onclick="createCampaign()">Create</button></div>
+        </div>
+        <div id="camp-error" class="error-msg"></div>
+      </div>
+      <div id="campaigns-list"><span class="muted">Loading…</span></div>
+    </div>
 
-      <hr style="margin: 20px 0; border: none; border-top: 1px solid #eee;" />
-
-      <label>Key label (optional)</label>
-      <input type="text" id="new-key-label" placeholder="e.g. Zapier Production" style="max-width:320px" />
-      <button onclick="generateKey()">Generate new API key</button>
+    <!-- DEVELOPER -->
+    <div id="view-developer" class="view">
+      <div class="card">
+        <h2>API Keys</h2>
+        <p class="hint">
+          Use these keys to connect BoostYourCampaign to Zapier and other integrations.
+          Each key is scoped to your account only. Store keys securely — they are shown only once.
+        </p>
+        <div id="new-key-notice" style="display:none"></div>
+        <div id="keys-list"><em class="muted">Loading…</em></div>
+        <hr style="margin: 20px 0; border: none; border-top: 1px solid #eee;" />
+        <label>Key label (optional)</label>
+        <input type="text" id="new-key-label" placeholder="e.g. Zapier Production" style="max-width:320px" />
+        <button onclick="generateKey()">Generate new API key</button>
+      </div>
     </div>
 
     <div style="text-align:right; margin-top: 8px;">
@@ -106,8 +162,33 @@
 </main>
 
 <script>
-  let session = null; // { id, name, email, initKey }
+  let session = null;
 
+  // ── Helpers ────────────────────────────────────────────────
+  function key() { return sessionStorage.getItem('byc_last_key'); }
+  async function api(path, opts = {}) {
+    const headers = Object.assign({ 'Authorization': 'Bearer ' + key() }, opts.headers || {});
+    if (opts.body) headers['Content-Type'] = 'application/json';
+    const r = await fetch(path, Object.assign({}, opts, { headers }));
+    const data = await r.json().catch(() => ({}));
+    if (!r.ok) throw new Error(data.message || 'Request failed');
+    return data;
+  }
+  function fmtMoney(amount, currency) {
+    try { return new Intl.NumberFormat(undefined, { style: 'currency', currency: currency || 'USD', maximumFractionDigits: 0 }).format(amount); }
+    catch { return (currency || '') + ' ' + amount; }
+  }
+  function fmtType(t) { return t.replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase()); }
+  function timeAgo(iso) {
+    const s = Math.floor((Date.now() - new Date(iso + 'Z').getTime()) / 1000);
+    if (isNaN(s)) return iso;
+    if (s < 60) return 'just now';
+    if (s < 3600) return Math.floor(s/60) + 'm ago';
+    if (s < 86400) return Math.floor(s/3600) + 'h ago';
+    return Math.floor(s/86400) + 'd ago';
+  }
+
+  // ── Auth ───────────────────────────────────────────────────
   function showTab(tab) {
     document.querySelectorAll('.tab').forEach((t, i) => t.classList.toggle('active', (i === 0) === (tab === 'login')));
     document.getElementById('login-form').style.display = tab === 'login' ? '' : 'none';
@@ -122,9 +203,11 @@
     const r = await fetch('/v1/auth/signup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, email, password }) });
     const data = await r.json();
     if (!r.ok) { document.getElementById('signup-error').textContent = data.message; return; }
-    // Signup now returns the first API key directly — no fragile second call.
-    session = { ...data.account, initKey: data.key.raw_key };
+    sessionStorage.setItem('byc_last_key', data.key.raw_key);
+    session = data.account;
     showApp();
+    // Surface the new key under Developer so the user can copy it.
+    showNewKey(data.key.raw_key, 'Default');
   }
 
   async function login() {
@@ -135,59 +218,131 @@
     const data = await r.json();
     if (!r.ok) { document.getElementById('login-error').textContent = data.message; return; }
     session = data.account;
-    // For login we need an existing key to call the keys API — store email/password temporarily for key init
-    session._email = email; session._password = password;
+    // Login does not return a key. If none is cached for this browser, prompt for one.
+    if (!key()) {
+      const k = prompt('Paste an existing API key to load your data (or cancel and create one under Settings › Developer):');
+      if (k) sessionStorage.setItem('byc_last_key', k.trim());
+    }
     showApp();
   }
 
   function showApp() {
     document.getElementById('auth-section').style.display = 'none';
     document.getElementById('app-section').style.display = 'block';
-    if (session.initKey) {
-      showNewKey(session.initKey, 'Default');
-      session.initKey = null;
+    document.getElementById('main-nav').style.display = 'flex';
+    showView('dashboard');
+  }
+
+  function logout() {
+    session = null;
+    sessionStorage.removeItem('byc_last_key');
+    document.getElementById('auth-section').style.display = '';
+    document.getElementById('app-section').style.display = 'none';
+    document.getElementById('main-nav').style.display = 'none';
+  }
+
+  // ── View routing ───────────────────────────────────────────
+  function showView(name) {
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-' + name).classList.add('active');
+    document.querySelectorAll('#main-nav a').forEach(a => a.classList.toggle('active', a.dataset.view === name));
+    if (name === 'dashboard') loadDashboard();
+    if (name === 'campaigns') loadCampaigns();
+    if (name === 'developer') loadKeys();
+  }
+
+  // ── Dashboard ──────────────────────────────────────────────
+  async function loadDashboard() {
+    if (!key()) return;
+    try {
+      const { totals, recent_events } = await api('/v1/dashboard');
+      document.getElementById('s-campaigns').textContent = totals.campaign_count;
+      document.getElementById('s-pledged').textContent = fmtMoney(totals.total_pledged, 'USD');
+      document.getElementById('s-backers').textContent = totals.total_backers;
+      document.getElementById('s-events').textContent = totals.total_events;
+      const el = document.getElementById('recent-events');
+      if (!recent_events.length) { el.innerHTML = '<span class="muted">No events yet. Add a demo campaign under Campaigns to generate some.</span>'; return; }
+      el.innerHTML = recent_events.map(e => `
+        <div class="evt">
+          <span><span class="badge">${fmtType(e.type)}</span> &nbsp; ${e.campaign_name}</span>
+          <span class="muted">${timeAgo(e.occurred_at)}</span>
+        </div>`).join('');
+    } catch (e) {
+      document.getElementById('recent-events').innerHTML = '<span class="muted">Could not load data. Make sure an API key is set under Settings › Developer.</span>';
     }
-    loadKeys();
   }
 
-  function logout() { session = null; document.getElementById('auth-section').style.display = ''; document.getElementById('app-section').style.display = 'none'; }
-
-  async function apiKey() {
-    // Use the last generated raw key stored in sessionStorage as auth
-    return sessionStorage.getItem('byc_last_key');
+  // ── Campaigns ──────────────────────────────────────────────
+  async function loadCampaigns() {
+    if (!key()) return;
+    const el = document.getElementById('campaigns-list');
+    try {
+      const { campaigns } = await api('/v1/campaigns');
+      if (!campaigns.length) { el.innerHTML = '<div class="card"><span class="muted">No campaigns yet. Create one above or click “Add demo campaign”.</span></div>'; return; }
+      el.innerHTML = campaigns.map(c => {
+        const pct = Math.min(c.percent_funded, 100);
+        return `
+        <div class="camp">
+          <h3>${c.name}</h3>
+          <div class="meta">${fmtMoney(c.amount_pledged, c.currency)} of ${fmtMoney(c.goal, c.currency)} &nbsp;·&nbsp; ${c.backer_count} backers &nbsp;·&nbsp; ${c.percent_funded}% funded</div>
+          <div class="progress"><div style="width:${pct}%"></div></div>
+        </div>`;
+      }).join('');
+    } catch (e) {
+      el.innerHTML = '<div class="card"><span class="muted">Could not load campaigns.</span></div>';
+    }
   }
 
+  async function createCampaign() {
+    document.getElementById('camp-error').textContent = '';
+    const name = document.getElementById('camp-name').value.trim();
+    const goal = parseInt(document.getElementById('camp-goal').value);
+    const currency = document.getElementById('camp-currency').value;
+    if (!name || !goal) { document.getElementById('camp-error').textContent = 'Name and goal are required.'; return; }
+    try {
+      await api('/v1/campaigns', { method: 'POST', body: JSON.stringify({ name, goal, currency }) });
+      document.getElementById('camp-name').value = '';
+      document.getElementById('camp-goal').value = '';
+      loadCampaigns();
+    } catch (e) { document.getElementById('camp-error').textContent = e.message; }
+  }
+
+  async function seedDemo() {
+    try { await api('/v1/demo/seed', { method: 'POST' }); loadCampaigns(); }
+    catch (e) { alert(e.message); }
+  }
+
+  // ── Developer / Keys ───────────────────────────────────────
   async function loadKeys() {
-    const key = sessionStorage.getItem('byc_last_key');
-    if (!key) { document.getElementById('keys-list').innerHTML = '<em style="color:#999;font-size:0.85rem">Generate a key to get started.</em>'; return; }
-    const r = await fetch('/v1/developer/keys', { headers: { 'Authorization': 'Bearer ' + key } });
-    if (!r.ok) { document.getElementById('keys-list').innerHTML = '<em style="color:#999;font-size:0.85rem">Could not load keys.</em>'; return; }
-    const { keys } = await r.json();
-    if (!keys.length) { document.getElementById('keys-list').innerHTML = '<em style="color:#999;font-size:0.85rem">No keys yet. Generate one below.</em>'; return; }
-    document.getElementById('keys-list').innerHTML = keys.map(k => `
-      <div class="key-row">
-        <span><strong>${k.label}</strong> &nbsp; <span class="key-prefix">${k.key_prefix}</span></span>
-        <span style="font-size:0.78rem;color:#999">${k.created_at.slice(0,10)}</span>
-        <button class="danger" style="padding:6px 12px;font-size:0.8rem" onclick="revokeKey('${k.id}')">Revoke</button>
-      </div>
-    `).join('');
+    const el = document.getElementById('keys-list');
+    if (!key()) { el.innerHTML = '<em class="muted">Generate a key to get started.</em>'; return; }
+    try {
+      const { keys } = await api('/v1/developer/keys');
+      if (!keys.length) { el.innerHTML = '<em class="muted">No keys yet. Generate one below.</em>'; return; }
+      el.innerHTML = keys.map(k => `
+        <div class="key-row">
+          <span><strong>${k.label}</strong> &nbsp; <span class="key-prefix">${k.key_prefix}</span></span>
+          <span class="muted">${k.created_at.slice(0,10)}</span>
+          <button class="danger" style="padding:6px 12px;font-size:0.8rem" onclick="revokeKey('${k.id}')">Revoke</button>
+        </div>`).join('');
+    } catch (e) { el.innerHTML = '<em class="muted">Could not load keys.</em>'; }
   }
 
   async function generateKey() {
     const label = document.getElementById('new-key-label').value.trim() || 'Default';
-    const key = sessionStorage.getItem('byc_last_key');
-    if (!key) { alert('Please sign in first.'); return; }
-    const r = await fetch('/v1/developer/keys', { method: 'POST', headers: { 'Authorization': 'Bearer ' + key, 'Content-Type': 'application/json' }, body: JSON.stringify({ label }) });
-    const data = await r.json();
-    if (!r.ok) { alert(data.message); return; }
-    showNewKey(data.key.raw_key, label);
-    loadKeys();
+    if (!key()) { alert('Please sign in first.'); return; }
+    try {
+      const { key: newKey } = await api('/v1/developer/keys', { method: 'POST', body: JSON.stringify({ label }) });
+      showNewKey(newKey.raw_key, label);
+      loadKeys();
+    } catch (e) { alert(e.message); }
   }
 
   function showNewKey(rawKey, label) {
     sessionStorage.setItem('byc_last_key', rawKey);
-    document.getElementById('new-key-notice').style.display = '';
-    document.getElementById('new-key-notice').innerHTML = `
+    const n = document.getElementById('new-key-notice');
+    n.style.display = '';
+    n.innerHTML = `
       <div class="notice success">
         <strong>New key generated: ${label}</strong><br/>
         Copy it now — it won't be shown again.
@@ -197,8 +352,7 @@
 
   async function revokeKey(keyId) {
     if (!confirm('Revoke this key? Any Zaps using it will stop working.')) return;
-    const key = sessionStorage.getItem('byc_last_key');
-    await fetch('/v1/developer/keys/' + keyId, { method: 'DELETE', headers: { 'Authorization': 'Bearer ' + key } });
+    await api('/v1/developer/keys/' + keyId, { method: 'DELETE' });
     loadKeys();
   }
 </script>
