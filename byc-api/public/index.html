@@ -122,10 +122,8 @@
     const r = await fetch('/v1/auth/signup', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ name, email, password }) });
     const data = await r.json();
     if (!r.ok) { document.getElementById('signup-error').textContent = data.message; return; }
-    // Auto-generate first key
-    const kr = await fetch('/v1/developer/keys/init', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ email, password, label: 'Default' }) });
-    const kdata = await kr.json();
-    session = { ...data.account, initKey: kdata.key.raw_key };
+    // Signup now returns the first API key directly — no fragile second call.
+    session = { ...data.account, initKey: data.key.raw_key };
     showApp();
   }
 
@@ -168,7 +166,7 @@
     if (!keys.length) { document.getElementById('keys-list').innerHTML = '<em style="color:#999;font-size:0.85rem">No keys yet. Generate one below.</em>'; return; }
     document.getElementById('keys-list').innerHTML = keys.map(k => `
       <div class="key-row">
-        <span><strong>${k.label}</strong> &nbsp; <span class="key-prefix">${k.prefix}</span></span>
+        <span><strong>${k.label}</strong> &nbsp; <span class="key-prefix">${k.key_prefix}</span></span>
         <span style="font-size:0.78rem;color:#999">${k.created_at.slice(0,10)}</span>
         <button class="danger" style="padding:6px 12px;font-size:0.8rem" onclick="revokeKey('${k.id}')">Revoke</button>
       </div>

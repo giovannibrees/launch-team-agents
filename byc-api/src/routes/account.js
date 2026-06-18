@@ -35,7 +35,28 @@ router.post('/auth/signup', async (req, res) => {
   const hashed = await bcrypt.hash(password, 10);
   db.prepare('INSERT INTO accounts (id, name, email, password) VALUES (?, ?, ?, ?)').run(id, name, email, hashed);
 
-  res.status(201).json({ account: { id, name, email } });
+  // Generate the first API key right here so signup returns a working key in one step.
+  const raw = 'byc_' + crypto.randomBytes(24).toString('hex');
+  const prefix = raw.slice(0, 12) + '...';
+  const keyHash = hashKey(raw);
+  const keyId = 'key_' + crypto.randomBytes(8).toString('hex');
+  db.prepare('INSERT INTO api_keys (id, account_id, key_hash, key_prefix, label) VALUES (?, ?, ?, ?, ?)')
+    .run(keyId, id, keyHash, prefix, 'Default');
+
+  res.status(201).json({
+    account: { id, name, email },
+    key: { id: keyId, prefix, label: 'Default', raw_key: raw },
+  });
+});
+
+// Debug: see what is actually stored (counts only, no secrets). Lets you verify
+// the database is persisting across deploys without needing a terminal.
+router.get('/debug/stats', (req, res) => {
+  const db = getDb();
+  const accounts = db.prepare('SELECT COUNT(*) AS c FROM accounts').get().c;
+  const keys = db.prepare('SELECT COUNT(*) AS c FROM api_keys').get().c;
+  const dbPath = process.env.DATABASE_PATH || './byc.db';
+  res.json({ accounts, api_keys: keys, database_path: dbPath });
 });
 
 // Login - returns a session token (simple: just generate an API key on login for demo purposes)
