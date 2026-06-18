@@ -7,7 +7,7 @@ const authentication = {
       key: 'apiKey',
       label: 'API Key',
       required: true,
-      type: 'string',
+      type: 'password',
       helpText:
         'Find your API key in BoostYourCampaign under **Settings › Developer**. ' +
         'You can generate a new key at any time from that page.',
