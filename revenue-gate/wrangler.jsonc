@@ -1,0 +1,21 @@
+{
+  "name": "revenue-gate",
+  "main": "src/index.ts",
+  "compatibility_date": "2025-06-01",
+  "assets": {
+    "directory": "./dist"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "revenue-gate-db",
+      "database_id": "REPLACE_ME"
+    }
+  ],
+  "vars": {
+    "PARSE_MODEL": "claude-haiku-4-5"
+  }
+  // Secrets (set via `wrangler secret put`):
+  // APP_SECRET – single bearer token for auth
+  // ANTHROPIC_API_KEY – server-side only, used by /api/parse
+}

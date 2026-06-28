@@ -1,0 +1,31 @@
+{
+  "name": "revenue-gate",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev:web": "vite --config web/vite.config.ts",
+    "build:web": "vite build --config web/vite.config.ts",
+    "dev": "wrangler dev",
+    "deploy": "npm run build:web && wrangler deploy",
+    "db:init": "wrangler d1 execute revenue-gate-db --local --file=schema.sql",
+    "db:init:remote": "wrangler d1 execute revenue-gate-db --remote --file=schema.sql"
+  },
+  "dependencies": {
+    "hono": "^4.7.0"
+  },
+  "devDependencies": {
+    "@anthropic-ai/sdk": "^0.52.0",
+    "@cloudflare/workers-types": "^4.20250620.0",
+    "@types/react": "^19.1.0",
+    "@types/react-dom": "^19.1.0",
+    "@vitejs/plugin-react": "^4.5.0",
+    "autoprefixer": "^10.4.21",
+    "postcss": "^8.5.4",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "tailwindcss": "^4.1.0",
+    "typescript": "^5.8.0",
+    "vite": "^6.3.0",
+    "wrangler": "^4.18.0"
+  }
+}
