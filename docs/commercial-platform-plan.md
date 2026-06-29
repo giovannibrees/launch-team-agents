@@ -197,6 +197,11 @@ resource; spend it on the router, SSR, and the Meta integration — the parts th
 
 ## B3. The Meta API reality — plan around this, it's the real gate
 
+> **v1 sidesteps this entirely.** The shipped first product
+> ([mvp-v1-spec.md](mvp-v1-spec.md)) uses **no Meta API at all** — manual publish,
+> manual CSV report upload. The section below is the *v-next* path for when you
+> add one-click publish/import after traction. Read it as "later," not "first."
+
 This is the part that ambushes people. Meta Marketing API has three tiers:
 
 - **Development Access** — default for a new app, heavily restricted; fine for
