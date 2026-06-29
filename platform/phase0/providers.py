@@ -116,8 +116,41 @@ class FakeLLM(LLMProvider):
     def complete(self, system: str, user: str, max_tokens: int = 600) -> str:
         if "persona" in system.lower():
             return self._fake_personas(user)
+        if "ad concept" in system.lower() or "creative" in system.lower():
+            return self._fake_concepts(user)
         h = int(hashlib.sha256(user.encode()).hexdigest(), 16)
         return _FAKE_REACTIONS[h % len(_FAKE_REACTIONS)]
+
+    @staticmethod
+    def _fake_concepts(user: str) -> str:
+        import json
+        import re
+
+        m = re.search(r"exactly (\d+)", user)
+        n = int(m.group(1)) if m else 6
+        angles = [
+            ("Problem-led", "problem-aware", "You don't hate mornings. You hate your alarm."),
+            ("Founder POV", "solution-aware", "I built this after I overslept the big one."),
+            ("Before / after", "product-aware", "From 5 snoozes to up on the first try."),
+            ("Social proof", "product-aware", "12,000 people fixed their mornings."),
+            ("Mechanism", "solution-aware", "Light tells your body to wake — not a buzzer."),
+            ("Listicle", "problem-aware", "3 reasons your alarm is wrecking your day."),
+        ]
+        out = []
+        for i in range(n):
+            a = angles[i % len(angles)]
+            out.append(
+                {
+                    "name": f"{a[0]} concept",
+                    "angle": a[0],
+                    "awareness_stage": a[1],
+                    "headline": a[2],
+                    "primary_text": "[demo copy — connect real API keys for live generation] "
+                    f"{a[2]} Here is the offer and the proof, with one clear CTA.",
+                    "description": "Native, scroll-stopping visual matching the angle.",
+                }
+            )
+        return json.dumps(out)
 
     @staticmethod
     def _fake_personas(user: str) -> str:

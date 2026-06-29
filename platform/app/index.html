@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Ad Studio — SSR-tested ad creation</title>
+<style>
+  :root { --bg:#0d1117; --card:#161b22; --line:#272e3a; --ink:#e6edf3; --mut:#8b949e;
+          --acc:#3b82f6; --good:#22c55e; --warn:#f59e0b; --bad:#ef4444; }
+  * { box-sizing:border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink);
+         font:15px/1.5 -apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif; }
+  header { padding:22px 28px; border-bottom:1px solid var(--line); display:flex;
+           align-items:center; gap:14px; flex-wrap:wrap; }
+  h1 { font-size:19px; margin:0; }
+  .sub { color:var(--mut); font-size:13px; }
+  .badge { margin-left:auto; padding:4px 10px; border-radius:20px; font-size:12px;
+           font-weight:600; border:1px solid var(--line); }
+  .badge.demo { color:var(--warn); border-color:var(--warn); }
+  .badge.live { color:var(--good); border-color:var(--good); }
+  main { max-width:920px; margin:0 auto; padding:24px 20px 80px; }
+  .tabs { display:flex; gap:6px; margin-bottom:18px; flex-wrap:wrap; }
+  .tab { padding:8px 14px; border:1px solid var(--line); background:var(--card);
+         color:var(--mut); border-radius:8px; cursor:pointer; font-size:14px; }
+  .tab.active { color:var(--ink); border-color:var(--acc); }
+  .panel { display:none; } .panel.active { display:block; }
+  label { display:block; font-size:13px; color:var(--mut); margin:14px 0 5px; }
+  input, textarea, select { width:100%; background:#0b0f15; color:var(--ink);
+    border:1px solid var(--line); border-radius:8px; padding:10px; font:inherit; }
+  textarea { resize:vertical; min-height:70px; }
+  .row { display:flex; gap:14px; flex-wrap:wrap; } .row > div { flex:1; min-width:160px; }
+  button.go { margin-top:18px; background:var(--acc); color:#fff; border:none;
+    border-radius:8px; padding:11px 20px; font-size:15px; font-weight:600; cursor:pointer; }
+  button.go:disabled { opacity:.5; cursor:default; }
+  .hint { color:var(--mut); font-size:12px; margin-top:6px; }
+  .status { margin-top:14px; color:var(--mut); font-size:14px; min-height:20px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px;
+          padding:16px 18px; margin-top:14px; }
+  .rank { display:flex; align-items:baseline; gap:10px; }
+  .rk { font-size:13px; color:var(--mut); width:24px; }
+  .nm { font-weight:600; } .angle { font-size:12px; color:var(--mut); margin-left:auto; }
+  .score { font-variant-numeric:tabular-nums; font-weight:700; }
+  .bar { height:7px; border-radius:4px; background:#0b0f15; margin:9px 0; overflow:hidden; }
+  .bar > i { display:block; height:100%; background:linear-gradient(90deg,var(--acc),var(--good)); }
+  .hl { margin:8px 0 4px; font-weight:600; }
+  .body { color:#c9d4e0; font-size:14px; }
+  details { margin-top:8px; } summary { cursor:pointer; color:var(--mut); font-size:13px; }
+  details .react { color:#c9d4e0; font-size:13px; font-style:italic; margin:6px 0 0; padding-left:10px;
+                   border-left:2px solid var(--line); }
+  table { width:100%; border-collapse:collapse; margin-top:10px; font-size:14px; }
+  th,td { text-align:left; padding:6px 8px; border-bottom:1px solid var(--line); }
+  .pill { display:inline-block; padding:2px 8px; border-radius:12px; font-size:12px; margin:2px 4px 2px 0; }
+  .pill.win { background:rgba(34,197,94,.15); color:var(--good); }
+  .pill.lose { background:rgba(239,68,68,.15); color:var(--bad); }
+  .top { box-shadow:0 0 0 1px var(--good) inset; }
+</style>
+</head>
+<body>
+<header>
+  <div>
+    <h1>Ad Studio</h1>
+    <div class="sub">Generate ads · score them against synthetic buyers (SSR) · close the loop with real results</div>
+  </div>
+  <span id="badge" class="badge">…</span>
+</header>
+
+<main>
+  <div class="tabs">
+    <div class="tab active" data-tab="create">① Create &amp; rank</div>
+    <div class="tab" data-tab="rank">② Rank ads I have</div>
+    <div class="tab" data-tab="loop">③ Results loop</div>
+  </div>
+
+  <!-- shared brand context -->
+  <div class="card">
+    <label>What is your business about? *</label>
+    <textarea id="description" placeholder="e.g. DTC sunrise-simulation alarm clock, $129, 30-night trial, for people who hate mornings…"></textarea>
+    <div class="row">
+      <div><label>Website (optional)</label><input id="url" placeholder="https://…"></div>
+      <div><label>Target customer (optional)</label><input id="target_customer" placeholder="busy parents, 28–45…"></div>
+    </div>
+  </div>
+
+  <!-- ① create -->
+  <section class="panel active" id="panel-create">
+    <label>Competitor / reference ads that work (optional — paste a few)</label>
+    <textarea id="references" placeholder="Paste competitor ad text or describe winning ads to imitate the angles…"></textarea>
+    <div class="row">
+      <div><label>Concepts to generate</label><input id="n_concepts" type="number" value="6" min="2" max="12"></div>
+      <div><label>Synthetic personas</label><input id="n_personas" type="number" value="10" min="3" max="60"></div>
+    </div>
+    <button class="go" data-action="generate">Generate &amp; rank ads</button>
+    <div class="status" id="s-create"></div>
+    <div id="out-create"></div>
+  </section>
+
+  <!-- ② rank existing -->
+  <section class="panel" id="panel-rank">
+    <label>Your ads — one per block, <code>Headline | Primary text</code> per line</label>
+    <textarea id="rank-ads" style="min-height:130px" placeholder="You don't hate mornings. You hate your alarm. | Wake to 30 min of sunrise light, not a buzzer.&#10;Introducing DriftLight | 10 levels, USB-C, 2-yr warranty."></textarea>
+    <button class="go" data-action="rank">Rank my ads</button>
+    <div class="status" id="s-rank"></div>
+    <div id="out-rank"></div>
+  </section>
+
+  <!-- ③ results loop -->
+  <section class="panel" id="panel-loop">
+    <label>Upload your Meta results export (CSV)</label>
+    <input id="csv-file" type="file" accept=".csv,text/csv">
+    <div class="hint">Export ad-level results from Meta Ads Manager. We read the ad-name and ROAS/result columns, learn winners &amp; losers, and propose the next round.</div>
+    <button class="go" data-action="results">Learn &amp; propose next round</button>
+    <div class="status" id="s-loop"></div>
+    <div id="out-loop"></div>
+  </section>
+</main>
+
+<script>
+const $ = s => document.querySelector(s);
+let csvText = "";
+
+fetch("/api/status").then(r=>r.json()).then(d=>{
+  const b = $("#badge"); b.textContent = d.mode==="live" ? "LIVE" : "DEMO MODE";
+  b.classList.add(d.mode==="live"?"live":"demo");
+  if (d.mode!=="live") b.title = "No API keys set — showing fake data. Add keys in platform/phase0/.env for live results.";
+});
+
+document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
+  document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+  document.querySelectorAll(".panel").forEach(x=>x.classList.remove("active"));
+  t.classList.add("active"); $("#panel-"+t.dataset.tab).classList.add("active");
+});
+
+$("#csv-file").onchange = e => {
+  const f = e.target.files[0]; if(!f) return;
+  const r = new FileReader(); r.onload = () => csvText = r.result; r.readAsText(f);
+};
+
+function brand(){ return {
+  description: $("#description").value, url: $("#url").value,
+  target_customer: $("#target_customer").value,
+}; }
+
+function adCard(a, i){
+  const w = Math.max(2, Math.min(100, (a.score/5)*100));
+  const reacts = (a.reactions||[]).map(r=>`<p class="react">${esc(r)}</p>`).join("");
+  return `<div class="card ${i===0?'top':''}">
+    <div class="rank"><span class="rk">#${i+1}</span>
+      <span class="nm">${esc(a.name||"")}</span>
+      <span class="angle">${esc(a.angle||"")} ${a.awareness_stage?("· "+esc(a.awareness_stage)):""}</span>
+      <span class="score">${a.score?.toFixed(2)??""}</span></div>
+    <div class="bar"><i style="width:${w}%"></i></div>
+    ${a.headline?`<div class="hl">${esc(a.headline)}</div>`:""}
+    ${a.primary_text?`<div class="body">${esc(a.primary_text)}</div>`:""}
+    ${reacts?`<details><summary>Why personas scored it this way</summary>${reacts}</details>`:""}
+  </div>`;
+}
+const esc = s => (s||"").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
+
+async function call(url, body, statusEl){
+  statusEl.textContent = "Scoring against synthetic buyers… (live runs take ~1–2 min)";
+  document.querySelectorAll("button.go").forEach(b=>b.disabled=true);
+  try{
+    const r = await fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+    const d = await r.json();
+    statusEl.textContent = d.error ? "⚠ "+d.error : "";
+    return d;
+  } catch(e){ statusEl.textContent = "⚠ "+e; return {error:String(e)}; }
+  finally{ document.querySelectorAll("button.go").forEach(b=>b.disabled=false); }
+}
+
+const actions = {
+  async generate(){
+    const d = await call("/api/generate", {...brand(),
+      references:$("#references").value, n_concepts:+$("#n_concepts").value, n_personas:+$("#n_personas").value
+    }, $("#s-create"));
+    if(d.ads) $("#out-create").innerHTML =
+      `<div class="hint" style="margin-top:14px">Ranked by purchase intent across ${d.panel} synthetic buyers.</div>`
+      + d.ads.map(adCard).join("");
+  },
+  async rank(){
+    const ads = $("#rank-ads").value.split("\n").map(l=>l.trim()).filter(Boolean).map(l=>{
+      const [h,b] = l.split("|"); return {headline:(h||"").trim(), primary_text:(b||"").trim()};
+    });
+    const d = await call("/api/rank", {...brand(), ads, n_personas:+($("#n_personas").value||10)}, $("#s-rank"));
+    if(d.ads) $("#out-rank").innerHTML = d.ads.map(adCard).join("");
+  },
+  async results(){
+    if(!csvText){ $("#s-loop").textContent="⚠ Choose a CSV file first."; return; }
+    const d = await call("/api/results", {...brand(), csv:csvText, n_concepts:+($("#n_concepts").value||6), n_personas:+($("#n_personas").value||10)}, $("#s-loop"));
+    if(d.error) return;
+    let html = "<div class='card'><b>What it learned</b><div style='margin-top:8px'>"
+      + (d.winners||[]).map(w=>`<span class="pill win">▲ ${esc(w)}</span>`).join("")
+      + (d.losers||[]).map(l=>`<span class="pill lose">▼ ${esc(l)}</span>`).join("") + "</div>";
+    html += "<table><tr><th>Ad</th><th>Result</th></tr>"
+      + (d.parsed||[]).map(r=>`<tr><td>${esc(r.name)}</td><td>${r.metric} ${esc(r.metric_name)}</td></tr>`).join("") + "</table></div>";
+    if(d.next_round && d.next_round.length)
+      html += `<div class="hint" style="margin-top:16px">Next round — informed by your winners, avoiding your losers:</div>`
+        + d.next_round.map(adCard).join("");
+    else html += `<div class="hint" style="margin-top:12px">Fill in the business description above to also generate the next round.</div>`;
+    $("#out-loop").innerHTML = html;
+  }
+};
+document.querySelectorAll("button.go").forEach(b=>b.onclick=()=>actions[b.dataset.action]());
+</script>
+</body>
+</html>

@@ -8,9 +8,17 @@ current one passes.
 
 ```
 platform/
-└── phase0/        ← YOU ARE HERE: validate SSR predicts ROAS (CLI, no platform)
-    (next) app/    ← v1 web app once Phase 0's gate passes
+├── phase0/        validate SSR predicts ROAS (CLI gate)
+└── app/           ← THE TOOL: browser app — describe business → ranked ads → results loop
 ```
+
+## Run the tool now
+
+```bash
+python3 platform/app/server.py     # → http://localhost:8000  (DEMO mode, no keys)
+```
+
+See [`app/README.md`](app/). Add keys in `phase0/.env` for live generation.
 
 ## Build order
 

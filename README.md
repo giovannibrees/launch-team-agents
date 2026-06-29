@@ -81,7 +81,8 @@ launch-team-agents/
 │   ├── commercial-platform-plan.md  # Phased plan to ship this as a SaaS product
 │   └── mvp-v1-spec.md               # The concrete first product (no Meta API)
 ├── platform/
-│   └── phase0/              # SSR validation harness (runnable; start here to build)
+│   ├── app/                # Ad Studio — the browser tool (python3 platform/app/server.py)
+│   └── phase0/             # SSR validation harness (CLI gate)
 ├── agents.json              # Machine-readable index of the agent group
 ├── openclaw.config.example.json  # Example gateway config (models, limits, approvals)
 ├── install.sh               # One-command group install for OpenClaw
