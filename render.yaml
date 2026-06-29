@@ -1,0 +1,28 @@
+# One-click deploy of Ad Studio to Render (https://render.com).
+# In Render: New + → Blueprint → connect this repo → Apply. Free plan works.
+services:
+  - type: web
+    name: ad-studio
+    runtime: python
+    plan: free
+    buildCommand: pip install -r requirements.txt
+    startCommand: python3 platform/app/server.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.9"
+      # Password-gate the public URL so only you can use it. Set this in the
+      # Render dashboard (or here). Without it, anyone with the link gets in.
+      - key: APP_PASSWORD
+        sync: false
+      # Optional: set keys here for LIVE mode instead of the in-app Settings tab.
+      # WARNING: if you set these, anyone who can log in spends YOUR API credits.
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      - key: EMBEDDING_PROVIDER
+        value: voyage
+      - key: VOYAGE_API_KEY
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+    # The SQLite DB is ephemeral on the free plan (resets on redeploy/sleep).
+    # Add a persistent disk (paid) to keep settings/results, or move to Supabase.

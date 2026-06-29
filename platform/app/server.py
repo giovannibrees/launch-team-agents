@@ -232,7 +232,29 @@ class Handler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(body)
 
+    def _gated(self) -> bool:
+        """If APP_PASSWORD is set (i.e. hosted), require HTTP basic auth.
+        Unset (local) → wide open. Stops a public URL from spending your keys."""
+        import base64
+
+        pw = os.environ.get("APP_PASSWORD")
+        if not pw:
+            return False
+        hdr = self.headers.get("Authorization", "")
+        if hdr.startswith("Basic "):
+            try:
+                if base64.b64decode(hdr[6:]).decode().split(":", 1)[-1] == pw:
+                    return False
+            except Exception:
+                pass
+        self.send_response(401)
+        self.send_header("WWW-Authenticate", 'Basic realm="Ad Studio"')
+        self.end_headers()
+        return True
+
     def do_GET(self):
+        if self._gated():
+            return
         if self.path in ("/", "/index.html"):
             with open(os.path.join(HERE, "index.html"), "rb") as fh:
                 self._send(200, fh.read(), "text/html; charset=utf-8")
@@ -242,6 +264,8 @@ class Handler(BaseHTTPRequestHandler):
             self._send(404, b"not found", "text/plain")
 
     def do_POST(self):
+        if self._gated():
+            return
         handler = ROUTES.get(self.path)
         if not handler:
             self._send(404, b"not found", "text/plain")
