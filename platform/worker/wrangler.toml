@@ -1,0 +1,19 @@
+name = "ad-studio"
+main = "src/index.js"
+compatibility_date = "2025-06-01"
+
+# Import the UI (src/index.html) as a string the Worker serves directly,
+# so the password gate covers it too.
+[[rules]]
+type = "Text"
+globs = ["**/*.html"]
+
+# D1 = Cloudflare's SQLite. Create it once (see README), then paste the id here.
+[[d1_databases]]
+binding = "DB"
+database_name = "ad-studio"
+database_id = "PASTE_AFTER_wrangler_d1_create"
+
+# Non-secret defaults. Secrets (APP_PASSWORD, *_API_KEY) go via `wrangler secret put`.
+[vars]
+EMBEDDING_PROVIDER = "voyage"

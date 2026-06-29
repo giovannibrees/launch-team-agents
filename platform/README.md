@@ -9,16 +9,23 @@ current one passes.
 ```
 platform/
 ├── phase0/        validate SSR predicts ROAS (CLI gate)
-└── app/           ← THE TOOL: browser app — describe business → ranked ads → results loop
+├── app/           THE TOOL (Python): browser app, run locally in one command
+└── worker/        ← THE TOOL (Cloudflare Workers): edge-deployed, D1-backed
 ```
 
-## Run the tool now
+## Run it now (local, Python)
 
 ```bash
 python3 platform/app/server.py     # → http://localhost:8000  (DEMO mode, no keys)
 ```
 
-See [`app/README.md`](app/). Add keys in `phase0/.env` for live generation.
+See [`app/README.md`](app/). Add keys in the in-app ⚙ Settings tab for live mode.
+
+## Deploy to the cloud (Cloudflare Workers)
+
+The Workers rebuild in [`worker/`](worker/) is the recommended hosted version —
+same UI, ported to a Worker + D1. `cd platform/worker && npx wrangler deploy`.
+See [`worker/README.md`](worker/) and [`../docs/deploy.md`](../docs/deploy.md).
 
 ## Build order
 

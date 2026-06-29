@@ -25,7 +25,28 @@ keys never leave your laptop.
 
 ---
 
-## 2. Render — a public URL in ~5 minutes (free plan)
+## 2. Cloudflare Workers — the recommended cloud version
+
+The Python server in options 1 & 3 **cannot run on Cloudflare Workers** (Workers
+run short-lived JS per request, not a long-lived process). So there's a
+Workers-native rebuild in [`platform/worker/`](../platform/worker/) — a Worker +
+D1 (Cloudflare SQLite) with the same UI. Deploy it with `wrangler`:
+
+```bash
+cd platform/worker
+npm install && npx wrangler login
+npx wrangler d1 create ad-studio          # paste the id into wrangler.toml
+npx wrangler d1 execute ad-studio --remote --file=schema.sql
+npx wrangler secret put APP_PASSWORD       # lock the public URL
+npx wrangler deploy                        # → ad-studio.<you>.workers.dev
+```
+
+Full steps (live-mode keys, local `wrangler dev`) in
+[`platform/worker/README.md`](../platform/worker/README.md). This is the better
+cloud path — edge-deployed, free tier, scales to zero, and it's the direction the
+production v1 was always heading (SSR ported to JS).
+
+## 3. Render — a public URL in ~5 minutes (Python prototype)
 
 This repo ships a `render.yaml` blueprint.
 
@@ -58,9 +79,9 @@ Python and the Procfile → add the same env vars (`APP_PASSWORD`, optional keys
 
 ---
 
-## 3. The production path (later, not now)
+## 4. The production path (later, not now)
 
-Options 1–2 host the **Python prototype** so you can click around today. The
+Options 1 & 3 host the **Python prototype** so you can click around today. The
 commercial v1 is a different stack — **Next.js on Vercel + Supabase** (Postgres,
 auth, encrypted secrets, persistent storage) — see
 [`commercial-platform-plan.md`](commercial-platform-plan.md) and
