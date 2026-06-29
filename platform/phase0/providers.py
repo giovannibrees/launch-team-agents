@@ -1,13 +1,13 @@
-"""Pluggable LLM + embedding providers for the Phase 0 SSR harness.
+"""Pluggable LLM + embedding + image providers.
 
-Everything is behind two tiny interfaces (``LLMProvider`` / ``EmbeddingProvider``)
-so the live product can swap models without touching the SSR logic. A fully
-deterministic ``fake`` provider lets the whole pipeline run with **no API keys
-and no pip installs** — use it to test plumbing (``--dry-run``).
+Config-driven: every factory takes an optional ``config`` dict (keys entered in
+the app's Settings screen) and falls back to environment variables. A fully
+deterministic ``fake`` path lets the whole pipeline run with NO keys and NO pip
+installs (demo mode).
 
-Select providers via env (see ``.env.example``):
-    LLM_PROVIDER=anthropic|fake
-    EMBEDDING_PROVIDER=voyage|openai|fake
+    get_llm(config)         -> LLMProvider
+    get_embeddings(config)  -> EmbeddingProvider
+    get_image(config)       -> ImageProvider
 """
 
 from __future__ import annotations
@@ -15,7 +15,15 @@ from __future__ import annotations
 import hashlib
 import math
 import os
-from typing import List
+from typing import List, Optional
+
+
+def _val(config: Optional[dict], key: str, env: str) -> Optional[str]:
+    """Config value first, then env. Empty strings count as unset."""
+    if config and config.get(key):
+        return str(config[key]).strip()
+    v = os.environ.get(env)
+    return v.strip() if v else None
 
 
 # --------------------------------------------------------------------------- #
@@ -31,16 +39,21 @@ class EmbeddingProvider:
         raise NotImplementedError
 
 
+class ImageProvider:
+    def generate(self, prompt: str) -> str:
+        """Return an image as a data: URL."""
+        raise NotImplementedError
+
+
 # --------------------------------------------------------------------------- #
-# Real: Anthropic (Claude) for persona reactions / generation
+# Real providers
 # --------------------------------------------------------------------------- #
 class AnthropicLLM(LLMProvider):
-    def __init__(self, model: str | None = None):
-        import anthropic  # lazy import so dry-run needs no deps
+    def __init__(self, api_key: str, model: Optional[str] = None):
+        import anthropic
 
-        self._client = anthropic.Anthropic(api_key=os.environ["ANTHROPIC_API_KEY"])
-        # Default to the latest capable model; cheap enough for many personas.
-        self._model = model or os.environ.get("ANTHROPIC_MODEL", "claude-sonnet-4-6")
+        self._client = anthropic.Anthropic(api_key=api_key)
+        self._model = model or "claude-sonnet-4-6"
 
     def complete(self, system: str, user: str, max_tokens: int = 600) -> str:
         msg = self._client.messages.create(
@@ -49,17 +62,13 @@ class AnthropicLLM(LLMProvider):
             system=system,
             messages=[{"role": "user", "content": user}],
         )
-        return "".join(block.text for block in msg.content if block.type == "text").strip()
+        return "".join(b.text for b in msg.content if b.type == "text").strip()
 
 
-# --------------------------------------------------------------------------- #
-# Real: embeddings via REST (Voyage is Anthropic's recommended partner; OpenAI
-# also supported). Kept as plain HTTP to avoid extra SDK dependencies.
-# --------------------------------------------------------------------------- #
 class VoyageEmbeddings(EmbeddingProvider):
-    def __init__(self, model: str | None = None):
-        self._model = model or os.environ.get("VOYAGE_MODEL", "voyage-3")
-        self._key = os.environ["VOYAGE_API_KEY"]
+    def __init__(self, api_key: str, model: Optional[str] = None):
+        self._key = api_key
+        self._model = model or "voyage-3"
 
     def embed(self, texts: List[str]) -> List[List[float]]:
         import requests
@@ -76,9 +85,9 @@ class VoyageEmbeddings(EmbeddingProvider):
 
 
 class OpenAIEmbeddings(EmbeddingProvider):
-    def __init__(self, model: str | None = None):
-        self._model = model or os.environ.get("OPENAI_EMBEDDING_MODEL", "text-embedding-3-small")
-        self._key = os.environ["OPENAI_API_KEY"]
+    def __init__(self, api_key: str, model: Optional[str] = None):
+        self._key = api_key
+        self._model = model or "text-embedding-3-small"
 
     def embed(self, texts: List[str]) -> List[List[float]]:
         import requests
@@ -94,12 +103,33 @@ class OpenAIEmbeddings(EmbeddingProvider):
         return [d["embedding"] for d in data]
 
 
+class OpenAIImage(ImageProvider):
+    """gpt-image-1. One key, returns base64 PNG. The first real model in the
+    router; Ideogram v3 / Seedream / Nano Banana Pro slot in behind the same
+    interface (via fal.ai or Replicate) when you want text-on-image / cheap
+    volume / consistent editing respectively."""
+
+    def __init__(self, api_key: str, model: Optional[str] = None):
+        self._key = api_key
+        self._model = model or "gpt-image-1"
+
+    def generate(self, prompt: str) -> str:
+        import requests
+
+        resp = requests.post(
+            "https://api.openai.com/v1/images/generations",
+            headers={"Authorization": f"Bearer {self._key}"},
+            json={"model": self._model, "prompt": prompt, "size": "1024x1024"},
+            timeout=120,
+        )
+        resp.raise_for_status()
+        b64 = resp.json()["data"][0]["b64_json"]
+        return f"data:image/png;base64,{b64}"
+
+
 # --------------------------------------------------------------------------- #
-# Fake: deterministic, dependency-free. Lets --dry-run exercise the full
-# pipeline so you can verify plumbing before spending a cent on API calls.
+# Fake providers — deterministic, dependency-free (demo mode)
 # --------------------------------------------------------------------------- #
-# The five purchase-intent anchors the fake LLM picks from, so dry-run output
-# ranks sensibly instead of being pure noise.
 _FAKE_REACTIONS = [
     "Honestly this isn't for me at all, I would never buy it.",
     "I probably would not buy this, it doesn't grab me.",
@@ -110,9 +140,6 @@ _FAKE_REACTIONS = [
 
 
 class FakeLLM(LLMProvider):
-    """Picks a reaction deterministically from (persona+ad) so rankings are
-    stable and reproducible. Demonstrates the pipeline; carries no real signal."""
-
     def complete(self, system: str, user: str, max_tokens: int = 600) -> str:
         if "persona" in system.lower():
             return self._fake_personas(user)
@@ -120,6 +147,22 @@ class FakeLLM(LLMProvider):
             return self._fake_concepts(user)
         h = int(hashlib.sha256(user.encode()).hexdigest(), 16)
         return _FAKE_REACTIONS[h % len(_FAKE_REACTIONS)]
+
+    @staticmethod
+    def _fake_personas(user: str) -> str:
+        import json
+        import re
+
+        m = re.search(r"exactly (\d+)", user)
+        n = int(m.group(1)) if m else 5
+        stages = ["unaware", "problem-aware", "solution-aware", "product-aware", "most-aware"]
+        segs = ["value seeker", "premium buyer", "skeptic", "impulse shopper", "researcher"]
+        return json.dumps([
+            {"id": f"p{i+1}", "name": f"Persona {i+1}", "segment": segs[i % len(segs)],
+             "awareness_stage": stages[i % len(stages)],
+             "description": f"Synthetic {segs[i % len(segs)]}, scrolls a busy feed."}
+            for i in range(n)
+        ])
 
     @staticmethod
     def _fake_concepts(user: str) -> str:
@@ -139,45 +182,17 @@ class FakeLLM(LLMProvider):
         out = []
         for i in range(n):
             a = angles[i % len(angles)]
-            out.append(
-                {
-                    "name": f"{a[0]} concept",
-                    "angle": a[0],
-                    "awareness_stage": a[1],
-                    "headline": a[2],
-                    "primary_text": "[demo copy — connect real API keys for live generation] "
-                    f"{a[2]} Here is the offer and the proof, with one clear CTA.",
-                    "description": "Native, scroll-stopping visual matching the angle.",
-                }
-            )
+            out.append({
+                "name": f"{a[0]} concept", "angle": a[0], "awareness_stage": a[1],
+                "headline": a[2],
+                "primary_text": "[demo copy — add API keys in Settings for live generation] "
+                f"{a[2]} Here is the offer and the proof, with one clear CTA.",
+                "description": "Native, scroll-stopping visual matching the angle.",
+            })
         return json.dumps(out)
-
-    @staticmethod
-    def _fake_personas(user: str) -> str:
-        import json
-        import re
-
-        m = re.search(r"exactly (\d+)", user)
-        n = int(m.group(1)) if m else 5
-        stages = ["unaware", "problem-aware", "solution-aware", "product-aware", "most-aware"]
-        segs = ["value seeker", "premium buyer", "skeptic", "impulse shopper", "researcher"]
-        panel = [
-            {
-                "id": f"p{i+1}",
-                "name": f"Persona {i+1}",
-                "segment": segs[i % len(segs)],
-                "awareness_stage": stages[i % len(stages)],
-                "description": f"Synthetic {segs[i % len(segs)]}, scrolls a busy feed.",
-            }
-            for i in range(n)
-        ]
-        return json.dumps(panel)
 
 
 class FakeEmbeddings(EmbeddingProvider):
-    """Hashing embedding: shared tokens → similar vectors. Deterministic, stdlib
-    only. Good enough to move the SSR math; not semantically real."""
-
     _DIM = 96
 
     def embed(self, texts: List[str]) -> List[List[float]]:
@@ -192,24 +207,55 @@ class FakeEmbeddings(EmbeddingProvider):
         return [v / norm for v in vec]
 
 
+class FakeImage(ImageProvider):
+    """Placeholder SVG so demo mode shows *something* per card without an API."""
+
+    def generate(self, prompt: str) -> str:
+        import base64
+
+        label = (prompt[:48] + "…") if len(prompt) > 48 else prompt
+        label = label.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
+        svg = (
+            "<svg xmlns='http://www.w3.org/2000/svg' width='512' height='512'>"
+            "<defs><linearGradient id='g' x1='0' y1='0' x2='1' y2='1'>"
+            "<stop offset='0' stop-color='#1f2937'/><stop offset='1' stop-color='#3b82f6'/>"
+            "</linearGradient></defs><rect width='512' height='512' fill='url(#g)'/>"
+            "<text x='50%' y='46%' fill='#fff' font-family='sans-serif' font-size='22' "
+            "text-anchor='middle'>DEMO IMAGE</text>"
+            f"<text x='50%' y='56%' fill='#cbd5e1' font-family='sans-serif' font-size='13' "
+            f"text-anchor='middle'>{label}</text></svg>"
+        )
+        return "data:image/svg+xml;base64," + base64.b64encode(svg.encode()).decode()
+
+
 # --------------------------------------------------------------------------- #
-# Factory
+# Factories
 # --------------------------------------------------------------------------- #
-def get_llm(dry_run: bool = False) -> LLMProvider:
-    name = "fake" if dry_run else os.environ.get("LLM_PROVIDER", "fake").lower()
-    if name == "anthropic":
-        return AnthropicLLM()
-    if name == "fake":
+def get_llm(dry_run: bool = False, config: Optional[dict] = None) -> LLMProvider:
+    key = _val(config, "anthropic_api_key", "ANTHROPIC_API_KEY")
+    if dry_run or not key:
         return FakeLLM()
-    raise ValueError(f"Unknown LLM_PROVIDER: {name}")
+    return AnthropicLLM(key, _val(config, "anthropic_model", "ANTHROPIC_MODEL"))
 
 
-def get_embeddings(dry_run: bool = False) -> EmbeddingProvider:
-    name = "fake" if dry_run else os.environ.get("EMBEDDING_PROVIDER", "fake").lower()
-    if name == "voyage":
-        return VoyageEmbeddings()
-    if name == "openai":
-        return OpenAIEmbeddings()
-    if name == "fake":
-        return FakeEmbeddings()
-    raise ValueError(f"Unknown EMBEDDING_PROVIDER: {name}")
+def get_embeddings(dry_run: bool = False, config: Optional[dict] = None) -> EmbeddingProvider:
+    provider = (_val(config, "embedding_provider", "EMBEDDING_PROVIDER") or "voyage").lower()
+    if not dry_run:
+        if provider == "voyage":
+            key = _val(config, "voyage_api_key", "VOYAGE_API_KEY")
+            if key:
+                return VoyageEmbeddings(key, _val(config, "voyage_model", "VOYAGE_MODEL"))
+        if provider == "openai":
+            key = _val(config, "openai_api_key", "OPENAI_API_KEY")
+            if key:
+                return OpenAIEmbeddings(key, _val(config, "openai_embedding_model", "OPENAI_EMBEDDING_MODEL"))
+    return FakeEmbeddings()
+
+
+def get_image(dry_run: bool = False, config: Optional[dict] = None) -> ImageProvider:
+    provider = (_val(config, "image_provider", "IMAGE_PROVIDER") or "openai").lower()
+    if not dry_run and provider == "openai":
+        key = _val(config, "openai_api_key", "OPENAI_API_KEY")
+        if key:
+            return OpenAIImage(key, _val(config, "image_model", "IMAGE_MODEL"))
+    return FakeImage()
