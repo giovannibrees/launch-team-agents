@@ -1,0 +1,10 @@
+.git
+platform/worker
+platform/app/adstudio.db
+**/__pycache__
+**/*.pyc
+**/.env
+**/node_modules
+agents
+shared
+docs

@@ -4,15 +4,19 @@ A browser app for the v1 loop: **describe your business → get ad concepts rank
 by synthetic-buyer purchase intent (SSR) → upload your real Meta results → get
 the next round.** No JSON files to hand-edit.
 
+**Multi-user:** email + password accounts, per-user projects/results/keys. To
+deploy it for real (Hetzner / any VPS), see [`../../docs/deploy-hetzner.md`](../../docs/deploy-hetzner.md).
+
 ## Run it (one command, no installs)
 
 ```bash
 python3 platform/app/server.py
-# open http://localhost:8000
+# open http://localhost:8000  → create an account
 ```
 
 Out of the box it runs in **DEMO mode** (fake data, no keys) so you can click
-through the whole flow. The badge top-right shows DEMO or LIVE.
+through the whole flow. The badge top-right shows DEMO or LIVE. The first thing
+you'll see is a sign-up screen; accounts + data persist in `adstudio.db`.
 
 ## Make it live — add keys in the app
 
@@ -63,8 +67,9 @@ production v1 ports the SSR math to TypeScript on Vercel + Supabase
 
 ## What's real vs. next
 
-- **Real now:** business → concepts → SSR ranking → reactions; rank-existing;
-  CSV results → learn → next round. Stateless, single-file stdlib server.
-- **Next:** render concepts to finished images (the model router — Ideogram v3 /
-  Seedream / Nano Banana Pro), accounts + persistence (Supabase), the calibration
+- **Real now:** accounts + per-user data; business → concepts → SSR ranking →
+  reactions; rank-existing; render images; CSV results → learn → next round +
+  calibration. Stdlib server + SQLite.
+- **Next:** broaden the image router (Ideogram v3 / Seedream / Nano Banana Pro),
+  email verification + password reset, Stripe billing, the calibration
   flywheel storing `(SSR score → real ROAS)` pairs across sessions.

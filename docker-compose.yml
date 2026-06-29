@@ -1,0 +1,42 @@
+# Standalone Ad Studio on a server with automatic HTTPS (Caddy).
+# Use this if the box has nothing else on :80/:443. If you ALREADY run a reverse
+# proxy (you mentioned kenthq) see docs/deploy-hetzner.md → "behind existing proxy".
+#
+#   cp .env.example .env   # set DOMAIN (+ optional SIGNUP_CODE / API keys)
+#   docker compose up -d --build
+
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    environment:
+      - ADSTUDIO_DB=/data/adstudio.db
+      - COOKIE_SECURE=1
+      - SIGNUP_CODE=${SIGNUP_CODE:-}
+      - EMBEDDING_PROVIDER=${EMBEDDING_PROVIDER:-voyage}
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
+      - VOYAGE_API_KEY=${VOYAGE_API_KEY:-}
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+    volumes:
+      - app_data:/data
+    expose:
+      - "8000"
+
+  caddy:
+    image: caddy:2
+    restart: unless-stopped
+    depends_on: [app]
+    environment:
+      - DOMAIN=${DOMAIN}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile
+      - caddy_data:/data
+      - caddy_config:/config
+
+volumes:
+  app_data:
+  caddy_data:
+  caddy_config:

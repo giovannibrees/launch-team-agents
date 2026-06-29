@@ -10,19 +10,22 @@ services:
     envVars:
       - key: PYTHON_VERSION
         value: "3.11.9"
-      # Password-gate the public URL so only you can use it. Set this in the
-      # Render dashboard (or here). Without it, anyone with the link gets in.
-      - key: APP_PASSWORD
+      - key: COOKIE_SECURE
+        value: "1"                # Render serves over HTTPS
+      # The app is multi-user (accounts). Optionally require an invite code to
+      # sign up so the public URL isn't open to the world.
+      - key: SIGNUP_CODE
         sync: false
-      # Optional: set keys here for LIVE mode instead of the in-app Settings tab.
-      # WARNING: if you set these, anyone who can log in spends YOUR API credits.
-      - key: ANTHROPIC_API_KEY
-        sync: false
+      # Optional owner-wide fallback keys (shared by all users; prefer per-user
+      # keys entered in the in-app Settings tab).
       - key: EMBEDDING_PROVIDER
         value: voyage
+      - key: ANTHROPIC_API_KEY
+        sync: false
       - key: VOYAGE_API_KEY
         sync: false
       - key: OPENAI_API_KEY
         sync: false
-    # The SQLite DB is ephemeral on the free plan (resets on redeploy/sleep).
-    # Add a persistent disk (paid) to keep settings/results, or move to Supabase.
+    # IMPORTANT: SQLite resets on redeploy/sleep without a disk — accounts would
+    # vanish. Attach a Render persistent disk and point ADSTUDIO_DB at it, or use
+    # your own server (docs/deploy-hetzner.md).

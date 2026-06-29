@@ -1,25 +1,23 @@
-"""SQLite persistence for Ad Studio (stdlib only).
+"""SQLite persistence for Ad Studio — multi-user, every row scoped by user_id.
 
-Stores settings (API keys), projects (brands), ranked ads with their SSR scores
-and rendered images, and uploaded real results — which lets us join SSR scores to
-real ROAS and surface the calibration flywheel (does SSR predict reality?).
-
-A local single-user dev store. In the production v1 this becomes Supabase
-Postgres with per-user **encrypted** secrets (Supabase Vault) — keys are NOT
-stored in plaintext there. Here they are, locally, by design.
+DB path is configurable via ADSTUDIO_DB (point it at a mounted volume in Docker
+so data survives container restarts). Defaults to a file next to this module.
 """
 
 from __future__ import annotations
 
+import hashlib
 import os
+import re
 import sqlite3
 import time
 from typing import Dict, List, Optional
 
-DB_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "adstudio.db")
+import auth
 
-# Settings keys that hold secrets — masked when read back to the UI.
+DB_PATH = os.environ.get("ADSTUDIO_DB") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "adstudio.db")
 SECRET_KEYS = {"anthropic_api_key", "voyage_api_key", "openai_api_key"}
+EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 
 def _conn() -> sqlite3.Connection:
@@ -32,125 +30,146 @@ def init() -> None:
     with _conn() as c:
         c.executescript(
             """
-            CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT);
-            CREATE TABLE IF NOT EXISTS projects (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                hash TEXT UNIQUE, name TEXT, url TEXT, description TEXT,
-                target_customer TEXT, created REAL);
-            CREATE TABLE IF NOT EXISTS ads (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                project_id INTEGER, name TEXT, angle TEXT, awareness_stage TEXT,
-                headline TEXT, primary_text TEXT, description TEXT,
+            CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                email TEXT UNIQUE, pw_hash TEXT, pw_salt TEXT, pw_iter INTEGER, created REAL);
+            CREATE TABLE IF NOT EXISTS sessions (token TEXT PRIMARY KEY, user_id INTEGER, expires REAL);
+            CREATE TABLE IF NOT EXISTS settings (user_id INTEGER, key TEXT, value TEXT, PRIMARY KEY(user_id, key));
+            CREATE TABLE IF NOT EXISTS projects (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
+                hash TEXT, name TEXT, url TEXT, description TEXT, target_customer TEXT, created REAL,
+                UNIQUE(user_id, hash));
+            CREATE TABLE IF NOT EXISTS ads (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, project_id INTEGER,
+                name TEXT, angle TEXT, awareness_stage TEXT, headline TEXT, primary_text TEXT, description TEXT,
                 score REAL, image TEXT, source TEXT, created REAL);
-            CREATE TABLE IF NOT EXISTS results (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                project_id INTEGER, ad_name TEXT, metric REAL, metric_name TEXT, created REAL);
+            CREATE TABLE IF NOT EXISTS results (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER, project_id INTEGER,
+                ad_name TEXT, metric REAL, metric_name TEXT, created REAL);
             """
         )
 
 
-# -- settings --------------------------------------------------------------- #
-def get_settings() -> Dict[str, str]:
+# --- users + sessions ------------------------------------------------------ #
+def create_user(email: str, password: str, iterations: int = auth.DEFAULT_ITERATIONS) -> Dict:
+    email = (email or "").strip().lower()
+    if not EMAIL_RE.match(email):
+        raise ValueError("Enter a valid email.")
+    if not password or len(password) < 8:
+        raise ValueError("Password must be at least 8 characters.")
+    h, salt, it = auth.hash_password(password, iterations)
     with _conn() as c:
-        return {r["key"]: r["value"] for r in c.execute("SELECT key, value FROM settings")}
+        if c.execute("SELECT 1 FROM users WHERE email=?", (email,)).fetchone():
+            raise ValueError("That email is already registered.")
+        cur = c.execute("INSERT INTO users(email,pw_hash,pw_salt,pw_iter,created) VALUES(?,?,?,?,?)",
+                        (email, h, salt, it, time.time()))
+        return {"id": cur.lastrowid, "email": email}
 
 
-def save_settings(updates: Dict[str, str]) -> None:
+def authenticate(email: str, password: str) -> Optional[Dict]:
+    with _conn() as c:
+        u = c.execute("SELECT * FROM users WHERE email=?", ((email or "").strip().lower(),)).fetchone()
+    if not u:
+        return None
+    return {"id": u["id"], "email": u["email"]} if auth.verify_password(
+        password, u["pw_salt"], u["pw_hash"], u["pw_iter"]) else None
+
+
+def create_session(user_id: int) -> str:
+    token = auth.new_token()
+    with _conn() as c:
+        c.execute("INSERT INTO sessions(token,user_id,expires) VALUES(?,?,?)",
+                  (token, user_id, time.time() + auth.SESSION_DAYS * 86400))
+    return token
+
+
+def user_from_token(token: Optional[str]) -> Optional[Dict]:
+    if not token:
+        return None
+    with _conn() as c:
+        s = c.execute("SELECT * FROM sessions WHERE token=?", (token,)).fetchone()
+        if not s or s["expires"] < time.time():
+            return None
+        u = c.execute("SELECT id,email FROM users WHERE id=?", (s["user_id"],)).fetchone()
+    return {"id": u["id"], "email": u["email"]} if u else None
+
+
+def destroy_session(token: Optional[str]) -> None:
+    if token:
+        with _conn() as c:
+            c.execute("DELETE FROM sessions WHERE token=?", (token,))
+
+
+# --- per-user settings ----------------------------------------------------- #
+def get_settings(user_id: int) -> Dict[str, str]:
+    with _conn() as c:
+        return {r["key"]: r["value"] for r in c.execute("SELECT key,value FROM settings WHERE user_id=?", (user_id,))}
+
+
+def masked_settings(user_id: int) -> Dict[str, str]:
+    s = dict(get_settings(user_id))
+    for k in SECRET_KEYS:
+        if s.get(k):
+            s[k] = "********"
+    return s
+
+
+def save_settings(user_id: int, updates: Dict[str, str]) -> None:
     with _conn() as c:
         for k, v in updates.items():
-            # Skip masked placeholders so "leave unchanged" doesn't wipe a key.
             if v == "********":
                 continue
-            c.execute(
-                "INSERT INTO settings(key,value) VALUES(?,?) "
-                "ON CONFLICT(key) DO UPDATE SET value=excluded.value",
-                (k, v),
-            )
+            c.execute("INSERT INTO settings(user_id,key,value) VALUES(?,?,?) "
+                      "ON CONFLICT(user_id,key) DO UPDATE SET value=excluded.value", (user_id, k, v))
 
 
-def masked_settings() -> Dict[str, str]:
-    out = dict(get_settings())
-    for k in SECRET_KEYS:
-        if out.get(k):
-            out[k] = "********"
-    return out
-
-
-# -- projects + ads --------------------------------------------------------- #
-def upsert_project(brand: Dict) -> int:
-    import hashlib
-
+# --- projects + ads + results ---------------------------------------------- #
+def upsert_project(user_id: int, brand: Dict) -> int:
     h = hashlib.sha256((brand.get("description", "") or "").encode()).hexdigest()[:16]
     with _conn() as c:
-        row = c.execute("SELECT id FROM projects WHERE hash=?", (h,)).fetchone()
+        row = c.execute("SELECT id FROM projects WHERE user_id=? AND hash=?", (user_id, h)).fetchone()
         if row:
             return row["id"]
-        cur = c.execute(
-            "INSERT INTO projects(hash,name,url,description,target_customer,created) "
-            "VALUES(?,?,?,?,?,?)",
-            (h, brand.get("name", ""), brand.get("url", ""), brand.get("description", ""),
-             brand.get("target_customer", ""), time.time()),
-        )
+        cur = c.execute("INSERT INTO projects(user_id,hash,name,url,description,target_customer,created) "
+                        "VALUES(?,?,?,?,?,?,?)", (user_id, h, brand.get("name", ""), brand.get("url", ""),
+                        brand.get("description", ""), brand.get("target_customer", ""), time.time()))
         return cur.lastrowid
 
 
-def save_ads(project_id: int, ads: List[Dict], source: str) -> List[int]:
+def save_ads(user_id: int, project_id: int, ads: List[Dict], source: str) -> List[int]:
     ids = []
     with _conn() as c:
         for a in ads:
-            cur = c.execute(
-                "INSERT INTO ads(project_id,name,angle,awareness_stage,headline,"
-                "primary_text,description,score,image,source,created) "
-                "VALUES(?,?,?,?,?,?,?,?,?,?,?)",
-                (project_id, a.get("name", ""), a.get("angle", ""), a.get("awareness_stage", ""),
-                 a.get("headline", ""), a.get("primary_text", ""), a.get("description", ""),
-                 a.get("score"), None, source, time.time()),
-            )
+            cur = c.execute("INSERT INTO ads(user_id,project_id,name,angle,awareness_stage,headline,primary_text,"
+                            "description,score,image,source,created) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
+                            (user_id, project_id, a.get("name", ""), a.get("angle", ""), a.get("awareness_stage", ""),
+                             a.get("headline", ""), a.get("primary_text", ""), a.get("description", ""),
+                             a.get("score"), None, source, time.time()))
             ids.append(cur.lastrowid)
     return ids
 
 
-def set_ad_image(ad_id: int, data_url: str) -> None:
+def set_ad_image(user_id: int, ad_id: int, data_url: str) -> None:
     with _conn() as c:
-        c.execute("UPDATE ads SET image=? WHERE id=?", (data_url, ad_id))
+        c.execute("UPDATE ads SET image=? WHERE id=? AND user_id=?", (data_url, ad_id, user_id))
 
 
-def get_ad(ad_id: int) -> Optional[Dict]:
-    with _conn() as c:
-        r = c.execute("SELECT * FROM ads WHERE id=?", (ad_id,)).fetchone()
-        return dict(r) if r else None
-
-
-# -- results + calibration -------------------------------------------------- #
-def save_results(project_id: int, rows: List[Dict]) -> None:
+def save_results(user_id: int, project_id: int, rows: List[Dict]) -> None:
     with _conn() as c:
         for r in rows:
-            c.execute(
-                "INSERT INTO results(project_id,ad_name,metric,metric_name,created) "
-                "VALUES(?,?,?,?,?)",
-                (project_id, r["name"], r["metric"], r.get("metric_name", "ROAS"), time.time()),
-            )
+            c.execute("INSERT INTO results(user_id,project_id,ad_name,metric,metric_name,created) VALUES(?,?,?,?,?,?)",
+                      (user_id, project_id, r["name"], r["metric"], r.get("metric_name", "ROAS"), time.time()))
 
 
-def calibration(project_id: Optional[int] = None) -> Dict:
-    """Join stored SSR scores to real results by ad name → correlation."""
+def calibration(user_id: int, project_id: Optional[int] = None) -> Dict:
     with _conn() as c:
-        # GROUP BY name → one pair per ad, so duplicate names (e.g. a concept
-        # regenerated in a later round) don't inflate the count.
-        q = (
-            "SELECT a.name AS name, AVG(a.score) AS ssr, AVG(r.metric) AS real "
-            "FROM ads a JOIN results r ON a.name = r.ad_name "
-            "WHERE a.score IS NOT NULL"
-        )
-        params: tuple = ()
+        q = ("SELECT a.name AS name, AVG(a.score) AS ssr, AVG(r.metric) AS real FROM ads a "
+             "JOIN results r ON a.name=r.ad_name AND a.user_id=r.user_id "
+             "WHERE a.score IS NOT NULL AND a.user_id=?")
+        params: tuple = (user_id,)
         if project_id is not None:
             q += " AND a.project_id=? AND r.project_id=?"
-            params = (project_id, project_id)
+            params = (user_id, project_id, project_id)
         q += " GROUP BY a.name"
         rows = [dict(x) for x in c.execute(q, params)]
     pairs = [(r["name"], r["ssr"], r["real"]) for r in rows]
-    return {"n": len(pairs), "rho": _spearman([p[1] for p in pairs], [p[2] for p in pairs]),
-            "pairs": pairs}
+    return {"n": len(pairs), "rho": _spearman([p[1] for p in pairs], [p[2] for p in pairs]), "pairs": pairs}
 
 
 def _spearman(xs: List[float], ys: List[float]) -> Optional[float]:
@@ -175,6 +194,5 @@ def _spearman(xs: List[float], ys: List[float]) -> Optional[float]:
     rx, ry = ranks(xs), ranks(ys)
     mx, my = sum(rx) / n, sum(ry) / n
     num = sum((rx[i] - mx) * (ry[i] - my) for i in range(n))
-    den = (sum((rx[i] - mx) ** 2 for i in range(n)) ** 0.5
-           * sum((ry[i] - my) ** 2 for i in range(n)) ** 0.5)
+    den = (sum((rx[i] - mx) ** 2 for i in range(n)) ** 0.5 * sum((ry[i] - my) ** 2 for i in range(n)) ** 0.5)
     return round(num / den, 2) if den else None
