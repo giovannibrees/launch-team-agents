@@ -32,10 +32,11 @@ npx wrangler d1 create ad-studio
 # 2. create the tables (run for both local dev and remote)
 npx wrangler d1 execute ad-studio --remote --file=schema.sql
 
-# 3. lock the public URL behind a password (any username works at the prompt)
-npx wrangler secret put APP_PASSWORD
+# 3. (optional) require an invite code to sign up, so the URL isn't wide open
+npx wrangler secret put SIGNUP_CODE
 
-# 4. (optional) live mode — set keys as secrets, OR enter them in the app's Settings tab
+# 4. (optional) owner-wide live keys — OR each user enters their own in Settings.
+#    WARNING: keys set here are shared by every signed-up user, on your dime.
 npx wrangler secret put ANTHROPIC_API_KEY
 npx wrangler secret put VOYAGE_API_KEY      # or set EMBEDDING_PROVIDER=openai + OPENAI_API_KEY
 npx wrangler secret put OPENAI_API_KEY      # embeddings and/or image generation
@@ -44,8 +45,21 @@ npx wrangler secret put OPENAI_API_KEY      # embeddings and/or image generation
 npx wrangler deploy
 ```
 
-You get a `https://ad-studio.<you>.workers.dev` URL. Open it, enter your
-`APP_PASSWORD`, and use it from anywhere.
+You get a `https://ad-studio.<you>.workers.dev` URL. Open it, **create an
+account**, and use it from anywhere. Each user gets their own projects, results,
+and API keys.
+
+### ⚠️ Free vs Paid plan — read before deploying multi-user
+
+Secure password hashing (PBKDF2, 100k iterations) uses ~45ms CPU, but the Workers
+**free plan caps CPU at 10ms/request** — so **signup/login will fail on free**.
+Choose one:
+
+- **Workers Paid ($5/mo)** — recommended for real multi-user. Leave
+  `PBKDF2_ITERATIONS=100000`. (You also get far higher D1 limits.)
+- **Free plan** — set `PBKDF2_ITERATIONS` to ~`12000` in `wrangler.toml` so logins
+  fit the CPU budget. Hashing is weaker, but the count is stored per-user, so you
+  can raise it after upgrading without breaking existing accounts.
 
 ### Local dev
 ```bash
@@ -60,14 +74,22 @@ npx wrangler dev        # runs the Worker + a local D1, on http://localhost:8787
   into **one** LLM call (then one embed call), so a full run is ~15 subrequests —
   well within limits — and faster than the per-persona Python version.
 
-## Notes / next steps
+## Auth model
 
-- **Secrets:** keys entered in the in-app Settings tab live in D1. Owner-wide keys
-  set via `wrangler secret put` are Cloudflare-encrypted. Either works; the
-  password gate stops strangers from spending them.
-- **Auth is a single shared password** — fine for you / a private demo. Real
-  multi-user accounts (per-user data + keys) is the next step: add Cloudflare
-  Access in front, or per-user auth + scoping in the Worker.
-- **Image router:** still `gpt-image-1` only. Add Ideogram v3 / Seedream behind
-  `generateImage()` in `providers.js` (one `fetch` each) when you want
-  ad-grade visuals.
+- **Accounts:** email + password (PBKDF2 via Web Crypto), sessions in D1 via an
+  HttpOnly cookie. Sign up / log in / log out in the UI.
+- **Per-user everything:** projects, ads, results, and API keys are scoped by
+  `user_id` — users never see each other's data. Verified end-to-end.
+- **`SIGNUP_CODE`** (optional secret): if set, new accounts must enter it — keeps a
+  public URL from being open to the world.
+- **Keys:** each user enters their own in the Settings tab (stored per-user in
+  D1). Owner-wide keys via `wrangler secret put` are a shared fallback — every
+  user spends them, so prefer per-user keys for a real product.
+
+## Next steps
+
+- **Email verification + password reset** — this ships signup/login only; add
+  verification (and reset via a token email) before real launch.
+- **Billing** — gate usage with Stripe once you have accounts.
+- **Image router** — still `gpt-image-1` only. Add Ideogram v3 / Seedream behind
+  `generateImage()` in `providers.js` (one `fetch` each) for ad-grade visuals.

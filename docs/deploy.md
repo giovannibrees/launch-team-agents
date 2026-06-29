@@ -37,14 +37,16 @@ cd platform/worker
 npm install && npx wrangler login
 npx wrangler d1 create ad-studio          # paste the id into wrangler.toml
 npx wrangler d1 execute ad-studio --remote --file=schema.sql
-npx wrangler secret put APP_PASSWORD       # lock the public URL
+npx wrangler secret put SIGNUP_CODE        # optional: gate who can sign up
 npx wrangler deploy                        # → ad-studio.<you>.workers.dev
 ```
 
-Full steps (live-mode keys, local `wrangler dev`) in
+It's **multi-user**: open the URL, create an account, and each user gets their own
+projects, results, and API keys. Full steps + the **free-vs-paid plan caveat**
+(password hashing needs Workers Paid, or a lower `PBKDF2_ITERATIONS` on free) in
 [`platform/worker/README.md`](../platform/worker/README.md). This is the better
-cloud path — edge-deployed, free tier, scales to zero, and it's the direction the
-production v1 was always heading (SSR ported to JS).
+cloud path — edge-deployed, scales to zero, and the direction the production v1
+was always heading (SSR ported to JS).
 
 ## 3. Render — a public URL in ~5 minutes (Python prototype)
 

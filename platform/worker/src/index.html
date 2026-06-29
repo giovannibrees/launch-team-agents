@@ -54,11 +54,30 @@
 </style>
 </head>
 <body>
+<!-- auth overlay: shown until signed in -->
+<div id="auth" style="position:fixed;inset:0;background:#0d1117;display:none;align-items:center;justify-content:center;z-index:50">
+  <div class="card" style="width:360px;max-width:92vw">
+    <h1 style="font-size:20px;margin:0 0 4px">Ad Studio</h1>
+    <div class="sub" id="auth-mode-sub">Sign in to your account</div>
+    <label>Email</label><input id="au-email" type="email" placeholder="you@brand.com">
+    <label>Password</label><input id="au-pass" type="password" placeholder="at least 8 characters">
+    <div id="au-codewrap" style="display:none"><label>Signup code</label><input id="au-code" placeholder="invite code"></div>
+    <button class="go" id="au-submit" style="width:100%">Sign in</button>
+    <div class="status" id="au-status"></div>
+    <div class="hint" style="margin-top:10px">
+      <span id="au-toggle-text">New here?</span>
+      <a href="#" id="au-toggle" style="color:var(--acc)">Create an account</a>
+    </div>
+  </div>
+</div>
+
 <header>
   <div>
     <h1>Ad Studio</h1>
     <div class="sub">Generate ads · score them against synthetic buyers (SSR) · render images · close the loop with real results</div>
   </div>
+  <span id="who" class="sub" style="margin-left:auto"></span>
+  <a href="#" id="logout" class="sub" style="color:var(--acc);display:none">Log out</a>
   <span id="badge" class="badge">…</span>
 </header>
 
@@ -152,12 +171,41 @@ function setBadge(caps){
   const cap = (el,on)=>{ const e=$(el); e.className="pill "+(on?"on":"off"); };
   cap("#cap-llm",caps.llm); cap("#cap-emb",caps.embeddings); cap("#cap-img",caps.images);
 }
-function loadStatus(){ fetch("/api/status").then(r=>r.json()).then(d=>setBadge(d.caps)); }
+function loadStatus(){ fetch("/api/status").then(r=>r.json()).then(d=>d.caps&&setBadge(d.caps)); }
 function loadSettings(){ fetch("/api/settings").then(r=>r.json()).then(d=>{
+  if(!d.settings) return;
   SET_FIELDS.forEach(k=>{ const el=$("#set-"+k); if(el && d.settings[k]!=null) el.value=d.settings[k]; });
   setBadge(d.caps);
 }); }
-loadStatus();
+
+// ---- auth ----
+let signupMode = false;
+function showApp(email){
+  $("#auth").style.display="none";
+  $("#who").textContent=email; $("#logout").style.display="inline";
+  loadStatus();
+}
+function showLogin(){ $("#auth").style.display="flex"; $("#who").textContent=""; $("#logout").style.display="none"; }
+function setAuthMode(su){
+  signupMode=su;
+  $("#auth-mode-sub").textContent = su ? "Create your account" : "Sign in to your account";
+  $("#au-submit").textContent = su ? "Create account" : "Sign in";
+  $("#au-toggle-text").textContent = su ? "Have an account?" : "New here?";
+  $("#au-toggle").textContent = su ? "Sign in" : "Create an account";
+  $("#au-codewrap").style.display = su ? "block" : "none";
+}
+$("#au-toggle").onclick = e => { e.preventDefault(); setAuthMode(!signupMode); $("#au-status").textContent=""; };
+$("#logout").onclick = async e => { e.preventDefault(); await fetch("/api/logout",{method:"POST"}); showLogin(); };
+$("#au-submit").onclick = async () => {
+  const body = { email:$("#au-email").value, password:$("#au-pass").value, code:$("#au-code").value };
+  $("#au-status").textContent="…";
+  const r = await fetch(signupMode?"/api/signup":"/api/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
+  const d = await r.json();
+  if(r.ok && d.email){ $("#au-status").textContent=""; showApp(d.email); }
+  else $("#au-status").textContent = "⚠ "+(d.error||"failed");
+};
+// gate everything on session
+fetch("/api/me").then(r=>r.ok?r.json():null).then(d=>{ if(d&&d.email) showApp(d.email); else { setAuthMode(false); showLogin(); } });
 
 document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
   document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
