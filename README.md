@@ -77,6 +77,8 @@ launch-team-agents/
 │   ├── ad-creation-service.md
 │   ├── platform-access-guide.md
 │   └── human-approval-policy.md
+├── docs/
+│   └── commercial-platform-plan.md  # Phased plan to ship this as a SaaS product
 ├── agents.json              # Machine-readable index of the agent group
 ├── openclaw.config.example.json  # Example gateway config (models, limits, approvals)
 ├── install.sh               # One-command group install for OpenClaw
