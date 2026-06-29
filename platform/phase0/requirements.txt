@@ -1,0 +1,8 @@
+# Phase 0 needs NOTHING for --dry-run (pure stdlib).
+# Install these only for real runs against live providers:
+anthropic>=0.40        # LLM_PROVIDER=anthropic (persona reactions / generation)
+requests>=2.31         # EMBEDDING_PROVIDER=voyage|openai (REST embeddings)
+
+# Optional — use the original, paper-faithful SSR package instead of the
+# reimplementation in ssr.py if you want to cross-check:
+#   semantic-similarity-rating

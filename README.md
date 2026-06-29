@@ -80,6 +80,8 @@ launch-team-agents/
 ├── docs/
 │   ├── commercial-platform-plan.md  # Phased plan to ship this as a SaaS product
 │   └── mvp-v1-spec.md               # The concrete first product (no Meta API)
+├── platform/
+│   └── phase0/              # SSR validation harness (runnable; start here to build)
 ├── agents.json              # Machine-readable index of the agent group
 ├── openclaw.config.example.json  # Example gateway config (models, limits, approvals)
 ├── install.sh               # One-command group install for OpenClaw
