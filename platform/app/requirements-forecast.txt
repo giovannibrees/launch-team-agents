@@ -1,0 +1,6 @@
+# OPTIONAL — enables the TimesFM forecasting backend on the Forecast tab.
+# The app works without this (built-in baseline forecaster). TimesFM is heavy:
+# pulls torch and downloads a ~500MB checkpoint from HuggingFace on first run,
+# and wants a few GB of RAM. Install on the server, then run with ENABLE_TIMESFM=1.
+timesfm[torch]
+numpy>=1.26

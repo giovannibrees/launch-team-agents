@@ -69,7 +69,8 @@ production v1 ports the SSR math to TypeScript on Vercel + Supabase
 
 - **Real now:** accounts + per-user data; business → concepts → SSR ranking →
   reactions; rank-existing; render images; CSV results → learn → next round +
-  calibration. Stdlib server + SQLite.
+  calibration; **forecast** (upload a dated Meta/Google/TikTok export → project
+  the next N days, baseline built-in or TimesFM when enabled). Stdlib + SQLite.
 - **Next:** broaden the image router (Ideogram v3 / Seedream / Nano Banana Pro),
   email verification + password reset, Stripe billing, the calibration
   flywheel storing `(SSR score → real ROAS)` pairs across sessions.

@@ -298,7 +298,7 @@ const actions = {
     if(d.caps){ setBadge(d.caps); $("#s-settings").textContent="Saved."; loadSettings(); }
   }
 };
-document.querySelectorAll("button.go").forEach(b=>b.onclick=()=>actions[b.dataset.action]());
+document.querySelectorAll("button.go[data-action]").forEach(b=>b.onclick=()=>actions[b.dataset.action]());
 </script>
 </body>
 </html>

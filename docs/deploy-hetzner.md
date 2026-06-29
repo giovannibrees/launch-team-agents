@@ -75,6 +75,27 @@ run **only the app** and point your existing proxy at it.
 | `PBKDF2_ITERATIONS` | Password hashing cost (default 200000 — fine on a server). |
 | `ANTHROPIC_API_KEY` / `VOYAGE_API_KEY` / `OPENAI_API_KEY` / `EMBEDDING_PROVIDER` | Optional owner-wide fallback keys, shared by all users. Prefer per-user keys in the Settings tab. |
 
+## Forecasting (optional: TimesFM)
+
+The **Forecast** tab (upload a dated Meta/Google/TikTok export → project the next
+N days) works out of the box with a built-in baseline forecaster — no extra
+install, runs for every user. To upgrade it to **Google's TimesFM** foundation
+model on your server:
+
+```bash
+pip install -r platform/app/requirements-forecast.txt   # heavy: torch + ~500MB checkpoint
+ENABLE_TIMESFM=1 python3 platform/app/server.py          # first request downloads the model
+```
+
+In Docker: add that requirements file to the image build and set
+`ENABLE_TIMESFM=1` in `.env` (expect a much larger image and a few GB of RAM).
+The forecast card shows which backend produced it (`baseline` vs `TimesFM`). Keep
+the baseline until you actually want the upgrade — it's a real model, not a
+default to flip on lightly.
+
+> Forecasting is a feature of the **Python app only** — TimesFM (torch) can't run
+> on the Cloudflare Workers build.
+
 ## Notes
 
 - **Backups:** the whole app state is one SQLite file in `app_data` (or

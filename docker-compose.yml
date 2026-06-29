@@ -17,6 +17,7 @@ services:
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY:-}
       - VOYAGE_API_KEY=${VOYAGE_API_KEY:-}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - ENABLE_TIMESFM=${ENABLE_TIMESFM:-}
     volumes:
       - app_data:/data
     expose:

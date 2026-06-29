@@ -86,6 +86,7 @@
     <div class="tab active" data-tab="create">① Create &amp; rank</div>
     <div class="tab" data-tab="rank">② Rank ads I have</div>
     <div class="tab" data-tab="loop">③ Results loop</div>
+    <div class="tab" data-tab="forecast">④ Forecast</div>
     <div class="tab right" data-tab="settings">⚙ Settings</div>
   </div>
 
@@ -126,6 +127,22 @@
     <button class="go" data-action="results">Learn &amp; propose next round</button>
     <div class="status" id="s-loop"></div>
     <div id="out-loop"></div>
+  </section>
+
+  <section class="panel" id="panel-forecast">
+    <div class="card" style="margin-top:0">
+      <label>Upload a dated metrics export (CSV) — Meta / Google / TikTok day breakdown</label>
+      <input id="fc-file" type="file" accept=".csv,text/csv">
+      <div class="hint">Needs a <b>date/day</b> column and a numeric <b>metric</b> (ROAS, spend, CPA, impressions…). Add a campaign/ad column to forecast each series separately. In Ads Manager, export with a “Day” breakdown.</div>
+      <div class="row">
+        <div><label>Forecast days</label><input id="fc-horizon" type="number" value="14" min="1" max="60"></div>
+        <div><label>Metric column (optional)</label><input id="fc-metric" placeholder="auto-detect"></div>
+        <div><label>Group column (optional)</label><input id="fc-group" placeholder="e.g. Ad name"></div>
+      </div>
+      <button class="go" data-action="forecast">Forecast</button>
+      <div class="status" id="s-forecast"></div>
+    </div>
+    <div id="out-forecast"></div>
   </section>
 
   <section class="panel" id="panel-settings">
@@ -211,12 +228,15 @@ document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
   document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
   document.querySelectorAll(".panel").forEach(x=>x.classList.remove("active"));
   t.classList.add("active"); $("#panel-"+t.dataset.tab).classList.add("active");
-  $("#brandcard").style.display = (t.dataset.tab==="settings") ? "none" : "block";
+  $("#brandcard").style.display = (t.dataset.tab==="settings"||t.dataset.tab==="forecast") ? "none" : "block";
   if(t.dataset.tab==="settings") loadSettings();
 });
 
 $("#csv-file").onchange = e => { const f=e.target.files[0]; if(!f) return;
   const r=new FileReader(); r.onload=()=>csvText=r.result; r.readAsText(f); };
+let fcCsv = "";
+$("#fc-file").onchange = e => { const f=e.target.files[0]; if(!f) return;
+  const r=new FileReader(); r.onload=()=>fcCsv=r.result; r.readAsText(f); };
 
 function brand(){ return { description:$("#description").value, url:$("#url").value, target_customer:$("#target_customer").value }; }
 const esc = s => (s||"").replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
@@ -292,13 +312,62 @@ const actions = {
       renderBoard("#next-board", d.next_round, "Next round — informed by your winners, avoiding your losers:");
     }
   },
+  async forecast(){
+    if(!fcCsv){ $("#s-forecast").textContent="⚠ Choose a CSV file first."; return; }
+    const d = await call("/api/forecast", {csv:fcCsv, horizon:+($("#fc-horizon").value||14),
+      metric:$("#fc-metric").value, group:$("#fc-group").value}, $("#s-forecast"));
+    const box=$("#out-forecast"); box.innerHTML="";
+    if(!d.series) return;
+    box.appendChild(el(`<div class="hint">Forecasting <b>${esc(d.metric||"metric")}</b> · ${d.series.length} series.</div>`));
+    d.series.forEach(s=>box.appendChild(forecastCard(s)));
+  },
   async "save-settings"(){
     const settings={}; SET_FIELDS.forEach(k=>{ const v=$("#set-"+k).value; if(v!=="") settings[k]=v; });
     const d = await call("/api/settings", {settings}, $("#s-settings"));
     if(d.caps){ setBadge(d.caps); $("#s-settings").textContent="Saved."; loadSettings(); }
   }
 };
-document.querySelectorAll("button.go").forEach(b=>b.onclick=()=>actions[b.dataset.action]());
+
+function el(html){ const d=document.createElement("div"); d.innerHTML=html; return d.firstElementChild||d; }
+
+function forecastCard(s){
+  const card=document.createElement("div"); card.className="card";
+  const last=s.history[s.history.length-1], end=s.forecast[s.forecast.length-1];
+  const dir = end.yhat>=last.v ? "▲" : "▼", col = end.yhat>=last.v ? "var(--good)":"var(--bad)";
+  card.innerHTML=`<div class="rank"><span class="nm">${esc(s.name)}</span>
+    <span class="angle">${s.backend==="timesfm"?"TimesFM":"baseline"} · ${s.forecast.length}-day</span></div>
+    <div style="margin:6px 0 2px;font-size:14px">now <b>${last.v}</b> → in ${s.forecast.length}d
+      <b style="color:${col}">${dir} ${end.yhat}</b> <span class="hint">(${end.lo}–${end.hi})</span></div>`;
+  card.appendChild(chart(s));
+  return card;
+}
+
+function chart(s){
+  const W=620,H=180,PL=8,PR=8,PT=10,PB=18;
+  const hist=s.history.map((p,i)=>({x:i,v:p.v})), n=hist.length, m=s.forecast.length;
+  const fc=s.forecast.map((p,i)=>({x:n+i,yhat:p.yhat,lo:p.lo,hi:p.hi}));
+  const all=[...hist.map(p=>p.v),...fc.flatMap(p=>[p.lo,p.hi,p.yhat])];
+  let mn=Math.min(...all), mx=Math.max(...all); if(mn===mx){mx+=1;mn-=1;}
+  const total=n+m-1||1;
+  const X=x=>PL+(x/total)*(W-PL-PR);
+  const Y=v=>PT+(1-(v-mn)/(mx-mn))*(H-PT-PB);
+  const line=pts=>pts.map((p,i)=>(i?"L":"M")+X(p.x).toFixed(1)+" "+Y(p.y).toFixed(1)).join(" ");
+  const histLine=line(hist.map(p=>({x:p.x,y:p.v})));
+  const join=[{x:hist[n-1].x,y:hist[n-1].v},...fc.map(p=>({x:p.x,y:p.yhat}))];
+  const fcLine=line(join);
+  const band=[...fc.map(p=>({x:p.x,y:p.hi})),...fc.slice().reverse().map(p=>({x:p.x,y:p.lo}))];
+  const bandPath=band.map((p,i)=>(i?"L":"M")+X(p.x).toFixed(1)+" "+Y(p.y).toFixed(1)).join(" ")+" Z";
+  const divX=X(n-1).toFixed(1);
+  return el(`<svg viewBox="0 0 ${W} ${H}" width="100%" style="margin-top:8px">
+    <path d="${bandPath}" fill="rgba(34,197,94,.14)" stroke="none"/>
+    <line x1="${divX}" y1="${PT}" x2="${divX}" y2="${H-PB}" stroke="var(--line)" stroke-dasharray="3 3"/>
+    <path d="${histLine}" fill="none" stroke="var(--acc)" stroke-width="2"/>
+    <path d="${fcLine}" fill="none" stroke="var(--good)" stroke-width="2" stroke-dasharray="5 4"/>
+    <text x="${PL}" y="${H-4}" fill="var(--mut)" font-size="11">${esc(s.history[0].t)}</text>
+    <text x="${W-PR}" y="${H-4}" fill="var(--mut)" font-size="11" text-anchor="end">${esc(s.forecast[m-1].t)} (forecast)</text>
+  </svg>`);
+}
+document.querySelectorAll("button.go[data-action]").forEach(b=>b.onclick=()=>actions[b.dataset.action]());
 </script>
 </body>
 </html>

@@ -24,6 +24,7 @@ import io
 import json
 import os
 import sys
+from datetime import timedelta
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -31,6 +32,7 @@ sys.path.insert(0, os.path.join(HERE, "..", "phase0"))
 
 import auth                       # noqa: E402
 import db                         # noqa: E402
+import forecast as fc             # noqa: E402
 import generate as gen            # noqa: E402
 import personas as personas_mod   # noqa: E402
 import providers                  # noqa: E402
@@ -188,7 +190,28 @@ def _parse_results_csv(text):
     return out
 
 
-AUTHED_POST = {"/api/generate": api_generate, "/api/rank": api_rank, "/api/render": api_render, "/api/results": api_results}
+def api_forecast(user_id, c, p):
+    horizon = max(1, min(60, int(p.get("horizon", 14))))
+    series, info = fc.parse_series(p.get("csv", ""), p.get("metric") or None, p.get("group") or None)
+    if not series:
+        return {"error": "Couldn't find a date column and a numeric metric column in that CSV.", "detected": info}
+    out = []
+    for name, s in list(series.items())[:12]:
+        dates, vals = s["dates"], s["values"]
+        weekdays = [d.weekday() for d in dates]
+        yhat, lo, hi, backend = fc.forecast_series(vals, horizon, weekdays)
+        future = [dates[-1] + timedelta(days=i + 1) for i in range(horizon)]
+        out.append({
+            "name": name, "backend": backend,
+            "history": [{"t": d.strftime("%Y-%m-%d"), "v": round(v, 4)} for d, v in zip(dates, vals)][-90:],
+            "forecast": [{"t": future[i].strftime("%Y-%m-%d"), "yhat": round(yhat[i], 4),
+                          "lo": round(lo[i], 4), "hi": round(hi[i], 4)} for i in range(horizon)],
+        })
+    return {"series": out, "detected": info, "metric": info.get("value_col")}
+
+
+AUTHED_POST = {"/api/generate": api_generate, "/api/rank": api_rank, "/api/render": api_render,
+               "/api/results": api_results, "/api/forecast": api_forecast}
 
 
 # --- HTTP ------------------------------------------------------------------ #
