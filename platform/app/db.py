@@ -16,7 +16,7 @@ from typing import Dict, List, Optional
 import auth
 
 DB_PATH = os.environ.get("ADSTUDIO_DB") or os.path.join(os.path.dirname(os.path.abspath(__file__)), "adstudio.db")
-SECRET_KEYS = {"anthropic_api_key", "voyage_api_key", "openai_api_key"}
+SECRET_KEYS = {"anthropic_api_key", "voyage_api_key", "openai_api_key", "fal_api_key"}
 EMAIL_RE = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")
 
 

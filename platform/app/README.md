@@ -71,6 +71,8 @@ production v1 ports the SSR math to TypeScript on Vercel + Supabase
   reactions; rank-existing; render images; CSV results → learn → next round +
   calibration; **forecast** (upload a dated Meta/Google/TikTok export → project
   the next N days, baseline built-in or TimesFM when enabled). Stdlib + SQLite.
-- **Next:** broaden the image router (Ideogram v3 / Seedream / Nano Banana Pro),
-  email verification + password reset, Stripe billing, the calibration
+- **Image router:** Render routes across **Ideogram v3** (on-image text) and
+  **Seedream** (cheap volume) via one fal.ai key, plus **gpt-image-1** (OpenAI).
+  Auto-picks by job, with a per-card override. Add keys in Settings.
+- **Next:** Nano Banana Pro for editing a winning visual, Stripe billing, the calibration
   flywheel storing `(SSR score → real ROAS)` pairs across sessions.

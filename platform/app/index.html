@@ -171,10 +171,18 @@
       <label>Voyage API key</label>
       <input id="set-voyage_api_key" type="password" placeholder="pa-…">
 
-      <label>OpenAI API key <span class="hint">— OpenAI embeddings and/or image generation (gpt-image-1)</span></label>
+      <label>OpenAI API key <span class="hint">— OpenAI embeddings and/or gpt-image-1</span></label>
       <input id="set-openai_api_key" type="password" placeholder="sk-…">
-      <label>Image model</label>
-      <input id="set-image_model" placeholder="gpt-image-1">
+
+      <label>fal.ai API key <span class="hint">— one key for Ideogram v3 (on-image text) + Seedream (cheap volume)</span></label>
+      <input id="set-fal_api_key" type="password" placeholder="fal-…">
+      <label>Default image model</label>
+      <select id="set-image_model">
+        <option value="auto">Auto (Ideogram for text ads, Seedream otherwise)</option>
+        <option value="ideogram">Ideogram v3 — best on-image text</option>
+        <option value="seedream">Seedream — cheap volume</option>
+        <option value="gpt-image">GPT-Image (OpenAI)</option>
+      </select>
 
       <button class="go" data-action="save-settings">Save settings</button>
       <div class="status" id="s-settings"></div>
@@ -185,7 +193,7 @@
 <script>
 const $ = s => document.querySelector(s);
 let csvText = "";
-const SET_FIELDS = ["anthropic_api_key","anthropic_model","embedding_provider","voyage_api_key","openai_api_key","image_model"];
+const SET_FIELDS = ["anthropic_api_key","anthropic_model","embedding_provider","voyage_api_key","openai_api_key","fal_api_key","image_model"];
 
 function setBadge(caps){
   const b = $("#badge"), live = caps.ssr_live;
@@ -302,13 +310,19 @@ function renderBoard(containerId, ads, note){
       ${a.primary_text?`<div class="body">${esc(a.primary_text)}</div>`:""}
       ${reacts?`<details><summary>Why personas scored it this way</summary>${reacts}</details>`:""}
       <div class="imgwrap"></div>
-      <button class="mini">Render image</button>`;
-    const btn = div.querySelector("button.mini"), wrap = div.querySelector(".imgwrap");
+      <div style="display:flex;gap:8px;align-items:center;margin-top:10px">
+        <select class="mdl" style="width:auto;padding:6px 8px;font-size:13px">
+          <option value="auto">Auto</option><option value="ideogram">Ideogram v3</option>
+          <option value="seedream">Seedream</option><option value="gpt-image">GPT-Image</option>
+        </select>
+        <button class="mini" style="margin-top:0">Render image</button>
+      </div>`;
+    const btn = div.querySelector("button.mini"), wrap = div.querySelector(".imgwrap"), sel = div.querySelector("select.mdl");
     btn.onclick = async () => {
       btn.disabled = true; btn.textContent = "Rendering…";
       const d = await (await fetch("/api/render",{method:"POST",headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({headline:a.headline,description:a.description,angle:a.angle,db_id:a.db_id})})).json();
-      if(d.image){ wrap.innerHTML = `<img src="${d.image}">` + (d.live?"":`<div class="hint">demo placeholder — add an OpenAI key for real images</div>`); btn.style.display="none"; }
+        body:JSON.stringify({headline:a.headline,description:a.description,angle:a.angle,db_id:a.db_id,model:sel.value})})).json();
+      if(d.image){ wrap.innerHTML = `<img src="${d.image}">` + (d.live?`<div class="hint">via ${esc(d.model||"")}</div>`:`<div class="hint">demo placeholder — add an OpenAI or fal.ai key in Settings for real images</div>`); btn.parentElement.style.display="none"; }
       else { btn.disabled=false; btn.textContent="Render image"; wrap.innerHTML=`<div class="hint">⚠ ${esc(d.error||"failed")}</div>`; }
     };
     box.appendChild(div);

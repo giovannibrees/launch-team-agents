@@ -127,6 +127,35 @@ class OpenAIImage(ImageProvider):
         return f"data:image/png;base64,{b64}"
 
 
+class FalImage(ImageProvider):
+    """Ideogram v3 (legible on-image text) and Seedream (cheap volume) via fal.ai,
+    one key for both. Returns a data URL (we download the result so it persists
+    like the OpenAI path)."""
+
+    def __init__(self, api_key: str, model_id: str):
+        self._key = api_key
+        self._model_id = model_id
+
+    def generate(self, prompt: str) -> str:
+        import base64
+        import requests
+
+        resp = requests.post(
+            f"https://fal.run/{self._model_id}",
+            headers={"Authorization": f"Key {self._key}", "Content-Type": "application/json"},
+            json={"prompt": prompt, "image_size": "square_hd", "num_images": 1},
+            timeout=180,
+        )
+        resp.raise_for_status()
+        images = resp.json().get("images") or []
+        if not images:
+            raise RuntimeError("fal.ai returned no image")
+        img = requests.get(images[0]["url"], timeout=60)
+        img.raise_for_status()
+        ctype = img.headers.get("Content-Type", "image/png")
+        return f"data:{ctype};base64," + base64.b64encode(img.content).decode()
+
+
 # --------------------------------------------------------------------------- #
 # Fake providers — deterministic, dependency-free (demo mode)
 # --------------------------------------------------------------------------- #
@@ -252,10 +281,43 @@ def get_embeddings(dry_run: bool = False, config: Optional[dict] = None) -> Embe
     return FakeEmbeddings()
 
 
-def get_image(dry_run: bool = False, config: Optional[dict] = None) -> ImageProvider:
-    provider = (_val(config, "image_provider", "IMAGE_PROVIDER") or "openai").lower()
-    if not dry_run and provider == "openai":
-        key = _val(config, "openai_api_key", "OPENAI_API_KEY")
-        if key:
-            return OpenAIImage(key, _val(config, "image_model", "IMAGE_MODEL"))
-    return FakeImage()
+def image_models_available(config: Optional[dict] = None) -> dict:
+    """Which image models can actually run given the keys present."""
+    fal = bool(_val(config, "fal_api_key", "FAL_API_KEY"))
+    openai = bool(_val(config, "openai_api_key", "OPENAI_API_KEY"))
+    return {"ideogram": fal, "seedream": fal, "gpt-image": openai, "any": fal or openai}
+
+
+def resolve_image_model(model: Optional[str], config: Optional[dict], text_on_image: bool = True) -> str:
+    """Turn a request ('auto'/'ideogram'/'seedream'/'gpt-image') into a concrete
+    model, honouring which keys exist. Auto: Ideogram for text-heavy ads, else
+    Seedream; fall back to whatever is available."""
+    avail = image_models_available(config)
+    choice = (model or "auto").lower()
+    if choice == "auto":
+        choice = "ideogram" if text_on_image else "seedream"
+    if avail.get(choice):
+        return choice
+    for fallback in ("ideogram", "seedream", "gpt-image"):  # graceful degrade
+        if avail.get(fallback):
+            return fallback
+    return "fake"
+
+
+def get_image(dry_run: bool = False, config: Optional[dict] = None,
+              model: Optional[str] = None, text_on_image: bool = True):
+    """Return (ImageProvider, model_name). Routes across the ad-image models."""
+    if dry_run:
+        return FakeImage(), "demo"
+    chosen = resolve_image_model(model, config, text_on_image)
+    if chosen == "gpt-image":
+        return OpenAIImage(_val(config, "openai_api_key", "OPENAI_API_KEY"),
+                           _val(config, "image_openai_model", "IMAGE_OPENAI_MODEL")), "gpt-image-1"
+    if chosen in ("ideogram", "seedream"):
+        key = _val(config, "fal_api_key", "FAL_API_KEY")
+        default_id = ("fal-ai/ideogram/v3" if chosen == "ideogram"
+                      else "fal-ai/bytedance/seedream/v3/text-to-image")
+        env_key = "FAL_IDEOGRAM_MODEL" if chosen == "ideogram" else "FAL_SEEDREAM_MODEL"
+        model_id = _val(config, env_key.lower(), env_key) or default_id
+        return FalImage(key, model_id), chosen
+    return FakeImage(), "demo"

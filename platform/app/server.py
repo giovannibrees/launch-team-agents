@@ -53,8 +53,8 @@ def caps(c: dict) -> dict:
     prov = (providers._val(c, "embedding_provider", "EMBEDDING_PROVIDER") or "voyage").lower()
     emb = bool((prov == "voyage" and providers._val(c, "voyage_api_key", "VOYAGE_API_KEY"))
                or (prov == "openai" and providers._val(c, "openai_api_key", "OPENAI_API_KEY")))
-    img = bool(providers._val(c, "openai_api_key", "OPENAI_API_KEY"))
-    return {"llm": llm, "embeddings": emb, "images": img, "ssr_live": llm and emb}
+    img = providers.image_models_available(c)
+    return {"llm": llm, "embeddings": emb, "images": img["any"], "image_models": img, "ssr_live": llm and emb}
 
 
 def _brand(p):
@@ -123,9 +123,12 @@ def api_rank(user_id, c, p):
 
 
 def api_render(user_id, c, p):
-    img = providers.get_image(not caps(c)["images"], c)
+    headline = p.get("headline", "")
+    requested = p.get("model") or c.get("image_model") or "auto"
+    img, model_used = providers.get_image(not caps(c)["images"], c,
+                                          model=requested, text_on_image=bool(headline.strip()))
     prompt = (f"High-converting {p.get('angle','')} social ad image. "
-              f"Headline on image: \"{p.get('headline','')}\". Visual: {p.get('description','')}. "
+              f"Headline on image: \"{headline}\". Visual: {p.get('description','')}. "
               f"Clean, native, scroll-stopping.")
     try:
         url = img.generate(prompt)
@@ -133,7 +136,7 @@ def api_render(user_id, c, p):
         return {"error": f"Image generation failed: {type(exc).__name__}: {exc}"}
     if p.get("db_id"):
         db.set_ad_image(user_id, int(p["db_id"]), url)
-    return {"image": url, "live": caps(c)["images"]}
+    return {"image": url, "live": caps(c)["images"], "model": model_used}
 
 
 def api_results(user_id, c, p):
