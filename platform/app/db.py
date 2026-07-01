@@ -31,8 +31,10 @@ def init() -> None:
         c.executescript(
             """
             CREATE TABLE IF NOT EXISTS users (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                email TEXT UNIQUE, pw_hash TEXT, pw_salt TEXT, pw_iter INTEGER, created REAL);
+                email TEXT UNIQUE, pw_hash TEXT, pw_salt TEXT, pw_iter INTEGER,
+                verified INTEGER DEFAULT 0, created REAL);
             CREATE TABLE IF NOT EXISTS sessions (token TEXT PRIMARY KEY, user_id INTEGER, expires REAL);
+            CREATE TABLE IF NOT EXISTS tokens (token TEXT PRIMARY KEY, user_id INTEGER, kind TEXT, expires REAL);
             CREATE TABLE IF NOT EXISTS settings (user_id INTEGER, key TEXT, value TEXT, PRIMARY KEY(user_id, key));
             CREATE TABLE IF NOT EXISTS projects (id INTEGER PRIMARY KEY AUTOINCREMENT, user_id INTEGER,
                 hash TEXT, name TEXT, url TEXT, description TEXT, target_customer TEXT, created REAL,
@@ -44,6 +46,11 @@ def init() -> None:
                 ad_name TEXT, metric REAL, metric_name TEXT, created REAL);
             """
         )
+        # Migration: add `verified` to an already-existing users table.
+        try:
+            c.execute("ALTER TABLE users ADD COLUMN verified INTEGER DEFAULT 0")
+        except sqlite3.OperationalError:
+            pass
 
 
 # --- users + sessions ------------------------------------------------------ #
@@ -57,9 +64,9 @@ def create_user(email: str, password: str, iterations: int = auth.DEFAULT_ITERAT
     with _conn() as c:
         if c.execute("SELECT 1 FROM users WHERE email=?", (email,)).fetchone():
             raise ValueError("That email is already registered.")
-        cur = c.execute("INSERT INTO users(email,pw_hash,pw_salt,pw_iter,created) VALUES(?,?,?,?,?)",
+        cur = c.execute("INSERT INTO users(email,pw_hash,pw_salt,pw_iter,verified,created) VALUES(?,?,?,?,0,?)",
                         (email, h, salt, it, time.time()))
-        return {"id": cur.lastrowid, "email": email}
+        return {"id": cur.lastrowid, "email": email, "verified": False}
 
 
 def authenticate(email: str, password: str) -> Optional[Dict]:
@@ -86,14 +93,60 @@ def user_from_token(token: Optional[str]) -> Optional[Dict]:
         s = c.execute("SELECT * FROM sessions WHERE token=?", (token,)).fetchone()
         if not s or s["expires"] < time.time():
             return None
-        u = c.execute("SELECT id,email FROM users WHERE id=?", (s["user_id"],)).fetchone()
-    return {"id": u["id"], "email": u["email"]} if u else None
+        u = c.execute("SELECT id,email,verified FROM users WHERE id=?", (s["user_id"],)).fetchone()
+    return {"id": u["id"], "email": u["email"], "verified": bool(u["verified"])} if u else None
 
 
 def destroy_session(token: Optional[str]) -> None:
     if token:
         with _conn() as c:
             c.execute("DELETE FROM sessions WHERE token=?", (token,))
+
+
+def destroy_user_sessions(user_id: int) -> None:
+    with _conn() as c:
+        c.execute("DELETE FROM sessions WHERE user_id=?", (user_id,))
+
+
+def get_user_by_email(email: str) -> Optional[Dict]:
+    with _conn() as c:
+        u = c.execute("SELECT id,email FROM users WHERE email=?", ((email or "").strip().lower(),)).fetchone()
+    return {"id": u["id"], "email": u["email"]} if u else None
+
+
+# --- email verification + password reset tokens ---------------------------- #
+def create_token(user_id: int, kind: str, ttl_seconds: int) -> str:
+    t = auth.new_token()
+    with _conn() as c:
+        c.execute("INSERT INTO tokens(token,user_id,kind,expires) VALUES(?,?,?,?)",
+                  (t, user_id, kind, time.time() + ttl_seconds))
+    return t
+
+
+def consume_token(token: Optional[str], kind: str) -> Optional[int]:
+    """Validate a single-use token; delete it and return its user_id, or None."""
+    if not token:
+        return None
+    with _conn() as c:
+        row = c.execute("SELECT * FROM tokens WHERE token=? AND kind=?", (token, kind)).fetchone()
+        if row:
+            c.execute("DELETE FROM tokens WHERE token=?", (token,))
+        if not row or row["expires"] < time.time():
+            return None
+        return row["user_id"]
+
+
+def mark_verified(user_id: int) -> None:
+    with _conn() as c:
+        c.execute("UPDATE users SET verified=1 WHERE id=?", (user_id,))
+
+
+def set_password(user_id: int, password: str, iterations: int = auth.DEFAULT_ITERATIONS) -> None:
+    if not password or len(password) < 8:
+        raise ValueError("Password must be at least 8 characters.")
+    h, salt, it = auth.hash_password(password, iterations)
+    with _conn() as c:
+        c.execute("UPDATE users SET pw_hash=?,pw_salt=?,pw_iter=? WHERE id=?", (h, salt, it, user_id))
 
 
 # --- per-user settings ----------------------------------------------------- #

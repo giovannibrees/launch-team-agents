@@ -75,6 +75,26 @@ run **only the app** and point your existing proxy at it.
 | `PBKDF2_ITERATIONS` | Password hashing cost (default 200000 — fine on a server). |
 | `ANTHROPIC_API_KEY` / `VOYAGE_API_KEY` / `OPENAI_API_KEY` / `EMBEDDING_PROVIDER` | Optional owner-wide fallback keys, shared by all users. Prefer per-user keys in the Settings tab. |
 
+## Email (verification + password reset)
+
+Accounts support email verification and password reset. **Without SMTP configured
+they still work in dev mode** — the links are logged to the container and shown
+in-app — which is fine for local testing. For real email, set in `.env`:
+
+```
+APP_BASE_URL=https://adstudio.yourdomain.com   # so links point at your domain
+SMTP_HOST=smtp.yourprovider.com
+SMTP_PORT=587
+SMTP_USER=...
+SMTP_PASS=...
+SMTP_FROM=Ad Studio <noreply@yourdomain.com>
+```
+
+Any transactional SMTP works (Postmark, SES, Resend, Mailgun, or your own mail
+server). Set `REQUIRE_VERIFICATION=1` to block app use until a user confirms their
+email; leave it off to let them in immediately with a "verify" banner. Password
+resets are single-use, expire in 1 hour, and log the user out everywhere.
+
 ## Forecasting (optional: TimesFM)
 
 The **Forecast** tab (upload a dated Meta/Google/TikTok export → project the next

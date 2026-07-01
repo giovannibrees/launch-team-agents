@@ -18,6 +18,13 @@ services:
       - VOYAGE_API_KEY=${VOYAGE_API_KEY:-}
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - ENABLE_TIMESFM=${ENABLE_TIMESFM:-}
+      - APP_BASE_URL=${APP_BASE_URL:-}
+      - REQUIRE_VERIFICATION=${REQUIRE_VERIFICATION:-}
+      - SMTP_HOST=${SMTP_HOST:-}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASS=${SMTP_PASS:-}
+      - SMTP_FROM=${SMTP_FROM:-}
     volumes:
       - app_data:/data
     expose:

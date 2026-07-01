@@ -26,6 +26,7 @@ import os
 import sys
 from datetime import timedelta
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from urllib.parse import parse_qs, urlparse
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, "..", "phase0"))
@@ -34,6 +35,7 @@ import auth                       # noqa: E402
 import db                         # noqa: E402
 import forecast as fc             # noqa: E402
 import generate as gen            # noqa: E402
+import mailer                     # noqa: E402
 import personas as personas_mod   # noqa: E402
 import providers                  # noqa: E402
 from ssr import SSRScorer         # noqa: E402
@@ -239,20 +241,47 @@ class Handler(BaseHTTPRequestHandler):
         length = int(self.headers.get("Content-Length", 0))
         return json.loads(self.rfile.read(length) or b"{}")
 
+    def _base_url(self):
+        if os.environ.get("APP_BASE_URL"):
+            return os.environ["APP_BASE_URL"].rstrip("/")
+        proto = self.headers.get("X-Forwarded-Proto") or ("https" if _secure() else "http")
+        return f"{proto}://{self.headers.get('Host', 'localhost')}"
+
+    def _email_link(self, user, kind, subject, blurb, ttl):
+        """Create a token, email the link. Returns dev_link (only when no SMTP)."""
+        token = db.create_token(user["id"], kind, ttl)
+        link = f"{self._base_url()}/{'verify' if kind == 'verify' else 'reset'}?token={token}"
+        mailer.send(user["email"], subject, f"{blurb}\n\n{link}\n")
+        return None if mailer.configured() else link
+
+    def _redirect(self, location):
+        self.send_response(302)
+        self.send_header("Location", location)
+        self.send_header("Content-Length", "0")
+        self.end_headers()
+
     def do_GET(self):
-        if self.path in ("/", "/index.html"):
+        path = urlparse(self.path).path
+        query = parse_qs(urlparse(self.path).query)
+        if path in ("/", "/index.html", "/reset"):
             with open(os.path.join(HERE, "index.html"), "rb") as fh:
                 self._send(200, fh.read(), "text/html; charset=utf-8")
             return
+        if path == "/verify":
+            uid = db.consume_token(query.get("token", [None])[0], "verify")
+            if uid:
+                db.mark_verified(uid)
+            return self._redirect("/?verified=1" if uid else "/?verified=0")
         user = self._user()
-        if self.path == "/api/me":
-            return self._json({"email": user["email"]}) if user else self._json({"error": "not signed in"}, 401)
+        if path == "/api/me":
+            return self._json({"email": user["email"], "verified": user["verified"]}) if user \
+                else self._json({"error": "not signed in"}, 401)
         if not user:
             return self._json({"error": "Sign in required."}, 401)
         c = _cfg(user["id"])
-        if self.path == "/api/status":
+        if path == "/api/status":
             return self._json({"caps": caps(c)})
-        if self.path == "/api/settings":
+        if path == "/api/settings":
             return self._json({"settings": db.masked_settings(user["id"]), "caps": caps(c)})
         self._send(404, b"not found", "text/plain")
 
@@ -262,15 +291,18 @@ class Handler(BaseHTTPRequestHandler):
         except Exception:
             return self._json({"error": "bad request"}, 400)
 
-        # public auth routes
+        # --- public auth routes --- #
         if self.path == "/api/signup":
             try:
                 if os.environ.get("SIGNUP_CODE") and body.get("code") != os.environ["SIGNUP_CODE"]:
                     raise ValueError("Invalid signup code.")
                 iters = int(os.environ.get("PBKDF2_ITERATIONS", auth.DEFAULT_ITERATIONS))
                 user = db.create_user(body.get("email"), body.get("password"), iters)
+                dev_link = self._email_link(user, "verify", "Verify your Ad Studio email",
+                                            "Confirm your email to finish signing up (expires in 24h):", 86400)
                 token = db.create_session(user["id"])
-                return self._json({"email": user["email"]}, 200, {"Set-Cookie": auth.session_cookie(token, _secure())})
+                return self._json({"email": user["email"], "verified": False, "dev_link": dev_link},
+                                  200, {"Set-Cookie": auth.session_cookie(token, _secure())})
             except ValueError as e:
                 return self._json({"error": str(e)}, 400)
         if self.path == "/api/login":
@@ -279,14 +311,42 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json({"error": "Wrong email or password."}, 401)
             token = db.create_session(user["id"])
             return self._json({"email": user["email"]}, 200, {"Set-Cookie": auth.session_cookie(token, _secure())})
+        if self.path == "/api/forgot":
+            user = db.get_user_by_email(body.get("email", ""))
+            dev_link = None
+            if user:
+                dev_link = self._email_link(user, "reset", "Reset your Ad Studio password",
+                                            "Reset your password (expires in 1h). Ignore if this wasn't you:", 3600)
+            # Always generic (don't reveal which emails exist).
+            return self._json({"ok": True, "dev_link": dev_link})
+        if self.path == "/api/reset":
+            uid = db.consume_token(body.get("token"), "reset")
+            if not uid:
+                return self._json({"error": "This reset link is invalid or expired."}, 400)
+            try:
+                db.set_password(uid, body.get("password"), int(os.environ.get("PBKDF2_ITERATIONS", auth.DEFAULT_ITERATIONS)))
+            except ValueError as e:
+                return self._json({"error": str(e)}, 400)
+            db.destroy_user_sessions(uid)  # log out everywhere
+            token = db.create_session(uid)
+            u = db.user_from_token(token)
+            return self._json({"email": u["email"]}, 200, {"Set-Cookie": auth.session_cookie(token, _secure())})
 
-        # session-gated routes
+        # --- session-gated routes --- #
         user = self._user()
         if self.path == "/api/logout":
             db.destroy_session(auth.parse_cookie(self.headers.get("Cookie"), "session"))
             return self._json({"ok": True}, 200, {"Set-Cookie": auth.clear_cookie(_secure())})
         if not user:
             return self._json({"error": "Sign in required."}, 401)
+        if self.path == "/api/resend-verification":
+            dev_link = self._email_link(user, "verify", "Verify your Ad Studio email",
+                                        "Confirm your email (expires in 24h):", 86400)
+            return self._json({"ok": True, "dev_link": dev_link})
+
+        if os.environ.get("REQUIRE_VERIFICATION") == "1" and not user["verified"]:
+            return self._json({"error": "Please verify your email first."}, 403)
+
         c = _cfg(user["id"])
         try:
             if self.path == "/api/settings":

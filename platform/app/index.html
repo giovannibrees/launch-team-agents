@@ -59,17 +59,20 @@
   <div class="card" style="width:360px;max-width:92vw">
     <h1 style="font-size:20px;margin:0 0 4px">Ad Studio</h1>
     <div class="sub" id="auth-mode-sub">Sign in to your account</div>
-    <label>Email</label><input id="au-email" type="email" placeholder="you@brand.com">
-    <label>Password</label><input id="au-pass" type="password" placeholder="at least 8 characters">
+    <div id="au-emailwrap"><label>Email</label><input id="au-email" type="email" placeholder="you@brand.com"></div>
+    <div id="au-passwrap"><label id="au-pass-label">Password</label><input id="au-pass" type="password" placeholder="at least 8 characters"></div>
     <div id="au-codewrap" style="display:none"><label>Signup code</label><input id="au-code" placeholder="invite code"></div>
     <button class="go" id="au-submit" style="width:100%">Sign in</button>
     <div class="status" id="au-status"></div>
-    <div class="hint" style="margin-top:10px">
-      <span id="au-toggle-text">New here?</span>
-      <a href="#" id="au-toggle" style="color:var(--acc)">Create an account</a>
+    <div class="hint" id="au-devlink" style="margin-top:10px;display:none"></div>
+    <div class="hint" id="au-links" style="margin-top:10px">
+      <a href="#" id="au-forgot" style="color:var(--acc)">Forgot password?</a>
+      <span style="float:right"><span id="au-toggle-text">New here?</span>
+      <a href="#" id="au-toggle" style="color:var(--acc)">Create an account</a></span>
     </div>
   </div>
 </div>
+<div id="toast" style="position:fixed;top:14px;left:50%;transform:translateX(-50%);background:var(--good);color:#0d1117;padding:8px 16px;border-radius:8px;font-weight:600;font-size:14px;display:none;z-index:60"></div>
 
 <header>
   <div>
@@ -82,6 +85,10 @@
 </header>
 
 <main>
+  <div id="verifybar" style="display:none;background:rgba(245,158,11,.12);border:1px solid var(--warn);color:var(--warn);padding:10px 14px;border-radius:8px;margin-bottom:14px;font-size:14px">
+    <span id="verifymsg">Please verify your email — check your inbox.</span>
+    <a href="#" id="verify-resend" style="color:var(--warn);text-decoration:underline">Resend</a><span id="verify-dev"></span>
+  </div>
   <div class="tabs">
     <div class="tab active" data-tab="create">① Create &amp; rank</div>
     <div class="tab" data-tab="rank">② Rank ads I have</div>
@@ -196,33 +203,69 @@ function loadSettings(){ fetch("/api/settings").then(r=>r.json()).then(d=>{
 }); }
 
 // ---- auth ----
-let signupMode = false;
-function showApp(email){
-  $("#auth").style.display="none";
-  $("#who").textContent=email; $("#logout").style.display="inline";
+const postJSON = (url,body)=>fetch(url,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body||{})}).then(r=>r.json());
+function toast(msg){ const t=$("#toast"); t.textContent=msg; t.style.display="block"; setTimeout(()=>t.style.display="none",4000); }
+const params = new URLSearchParams(location.search);
+const resetToken = (location.pathname==="/reset") ? params.get("token") : null;
+
+let authMode = "login";
+function setMode(m){
+  authMode=m;
+  $("#auth-mode-sub").textContent={login:"Sign in to your account",signup:"Create your account",forgot:"Reset your password",reset:"Set a new password"}[m];
+  $("#au-emailwrap").style.display = m==="reset" ? "none":"block";
+  $("#au-passwrap").style.display = m==="forgot" ? "none":"block";
+  $("#au-pass-label").textContent = m==="reset" ? "New password":"Password";
+  $("#au-codewrap").style.display = m==="signup" ? "block":"none";
+  $("#au-submit").textContent={login:"Sign in",signup:"Create account",forgot:"Send reset link",reset:"Set password"}[m];
+  $("#au-links").style.display = m==="reset" ? "none":"block";
+  $("#au-forgot").style.display = m==="login" ? "inline":"none";
+  $("#au-toggle-text").textContent = m==="signup" ? "Have an account?":"New here?";
+  $("#au-toggle").textContent = m==="signup" ? "Sign in":"Create an account";
+  $("#au-status").textContent=""; $("#au-devlink").style.display="none";
+}
+function showApp(email, verified){
+  $("#auth").style.display="none"; $("#who").textContent=email; $("#logout").style.display="inline";
+  $("#verifybar").style.display = verified ? "none":"block";
   loadStatus();
 }
 function showLogin(){ $("#auth").style.display="flex"; $("#who").textContent=""; $("#logout").style.display="none"; }
-function setAuthMode(su){
-  signupMode=su;
-  $("#auth-mode-sub").textContent = su ? "Create your account" : "Sign in to your account";
-  $("#au-submit").textContent = su ? "Create account" : "Sign in";
-  $("#au-toggle-text").textContent = su ? "Have an account?" : "New here?";
-  $("#au-toggle").textContent = su ? "Sign in" : "Create an account";
-  $("#au-codewrap").style.display = su ? "block" : "none";
-}
-$("#au-toggle").onclick = e => { e.preventDefault(); setAuthMode(!signupMode); $("#au-status").textContent=""; };
-$("#logout").onclick = async e => { e.preventDefault(); await fetch("/api/logout",{method:"POST"}); showLogin(); };
+function devLink(link){ if(!link) return; const e=$("#au-devlink"); e.style.display="block";
+  e.innerHTML=`No email configured — <a href="${link}" style="color:var(--acc)">use this link</a>`; }
+
+$("#au-toggle").onclick = e => { e.preventDefault(); setMode(authMode==="signup"?"login":"signup"); };
+$("#au-forgot").onclick = e => { e.preventDefault(); setMode("forgot"); };
+$("#logout").onclick = async e => { e.preventDefault(); await fetch("/api/logout",{method:"POST"}); setMode("login"); showLogin(); };
+$("#verify-resend").onclick = async e => { e.preventDefault();
+  const d = await postJSON("/api/resend-verification"); $("#verifymsg").textContent="Verification sent — check your inbox.";
+  if(d.dev_link) $("#verify-dev").innerHTML=` · <a href="${d.dev_link}" style="color:var(--warn)">verify link</a>`; };
+
 $("#au-submit").onclick = async () => {
-  const body = { email:$("#au-email").value, password:$("#au-pass").value, code:$("#au-code").value };
   $("#au-status").textContent="…";
-  const r = await fetch(signupMode?"/api/signup":"/api/login",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)});
-  const d = await r.json();
-  if(r.ok && d.email){ $("#au-status").textContent=""; showApp(d.email); }
-  else $("#au-status").textContent = "⚠ "+(d.error||"failed");
+  if(authMode==="forgot"){
+    const d = await postJSON("/api/forgot",{email:$("#au-email").value});
+    $("#au-status").textContent="If that email exists, a reset link is on its way."; devLink(d.dev_link); return;
+  }
+  if(authMode==="reset"){
+    const d = await postJSON("/api/reset",{token:resetToken,password:$("#au-pass").value});
+    if(d.email){ history.replaceState({},"",location.pathname==="/reset"?"/":location.pathname+location.search.replace(/[?&]token=[^&]*/,"")); toast("Password updated ✓"); showApp(d.email,true); }
+    else $("#au-status").textContent="⚠ "+(d.error||"failed");
+    return;
+  }
+  const body={email:$("#au-email").value,password:$("#au-pass").value,code:$("#au-code").value};
+  const d = await postJSON(authMode==="signup"?"/api/signup":"/api/login", body);
+  if(d.email){ $("#au-status").textContent=""; showApp(d.email, d.verified!==false); if(authMode==="signup") devLink(d.dev_link); }
+  else $("#au-status").textContent="⚠ "+(d.error||"failed");
 };
-// gate everything on session
-fetch("/api/me").then(r=>r.ok?r.json():null).then(d=>{ if(d&&d.email) showApp(d.email); else { setAuthMode(false); showLogin(); } });
+
+// startup: reset link → reset form; else gate on session; show verified toast
+if(resetToken){ setMode("reset"); showLogin(); }
+else {
+  if(params.get("verified")==="1"){ toast("Email verified ✓"); history.replaceState({},"",location.pathname); }
+  else if(params.get("verified")==="0"){ toast("Verification link invalid or expired."); history.replaceState({},"",location.pathname); }
+  fetch("/api/me").then(r=>r.ok?r.json():null).then(d=>{
+    if(d&&d.email) showApp(d.email, d.verified); else { setMode("login"); showLogin(); }
+  });
+}
 
 document.querySelectorAll(".tab").forEach(t=>t.onclick=()=>{
   document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
