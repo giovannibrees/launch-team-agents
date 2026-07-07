@@ -12,6 +12,7 @@
     "shared/launch-brief-template.md",
     "shared/performance-benchmarks.md",
     "shared/ad-creative-playbook.md",
+    "shared/ad-creation-service.md",
     "shared/platform-access-guide.md",
     "shared/human-approval-policy.md"
   ],
@@ -43,6 +44,7 @@
       "knowledge": [
         "shared/performance-benchmarks.md",
         "shared/ad-creative-playbook.md",
+        "shared/ad-creation-service.md",
         "shared/platform-access-guide.md",
         "shared/launch-brief-template.md"
       ],
@@ -58,6 +60,7 @@
       "workspace": "agents/launchcreative",
       "knowledge": [
         "shared/ad-creative-playbook.md",
+        "shared/ad-creation-service.md",
         "shared/performance-benchmarks.md",
         "shared/launch-brief-template.md"
       ],
@@ -74,6 +77,7 @@
       "knowledge": [
         "shared/performance-benchmarks.md",
         "shared/ad-creative-playbook.md",
+        "shared/ad-creation-service.md",
         "shared/platform-access-guide.md",
         "shared/human-approval-policy.md"
       ],
@@ -89,6 +93,7 @@
       "workspace": "agents/launchperformance",
       "knowledge": [
         "shared/performance-benchmarks.md",
+        "shared/ad-creation-service.md",
         "shared/platform-access-guide.md",
         "shared/human-approval-policy.md"
       ],

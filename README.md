@@ -74,6 +74,7 @@ launch-team-agents/
 │   ├── launch-brief-template.md
 │   ├── performance-benchmarks.md
 │   ├── ad-creative-playbook.md
+│   ├── ad-creation-service.md
 │   ├── platform-access-guide.md
 │   └── human-approval-policy.md
 ├── agents.json              # Machine-readable index of the agent group
