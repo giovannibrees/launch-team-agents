@@ -1,3 +1,0 @@
-# Root requirements so PaaS hosts (Render/Railway) detect Python and install
-# what the app needs for LIVE mode. Demo mode needs none of this.
--r platform/phase0/requirements.txt

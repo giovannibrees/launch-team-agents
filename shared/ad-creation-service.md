@@ -7,6 +7,9 @@ real results, and loop. This is the system Superscale-style products are built
 on — written out so you can assemble it from best-of-breed tools instead of
 buying one black box.
 
+> The productized implementation of this architecture lives in
+> [`legendary-ad-tool`](https://github.com/giovannibrees/legendary-ad-tool) (proprietary).
+>
 > Companion to [`ad-creative-playbook.md`](ad-creative-playbook.md) (the *why* of
 > good ads) and [`performance-benchmarks.md`](performance-benchmarks.md) (the
 > *whether*). This file is the *how* — the pipeline and the tooling.
